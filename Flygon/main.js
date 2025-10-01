@@ -3,6 +3,7 @@ import { LIBS } from './libs.js';
 import { generateFlygonBodyBezier } from './BodyParts/FlygonBody.js';
 import { generateFlygonBelly } from './BodyParts/FlygonBelly.js';
 import { generateFlygonHead } from './BodyParts/FlygonHead.js';
+import { generateCurvedHorn_flat } from './BodyParts/FlygonHorn.js';
 
 function main() {
     var CANVAS = document.getElementById("mycanvas");
@@ -93,23 +94,44 @@ function main() {
     let FlygonBody = generateFlygonBodyBezier(p0, p1, p2, p3, 1, 1, 80, 40);
     let FlygonBelly = generateFlygonBelly(0.8,0.5,1, 40, 40);
     let FlygonHead = generateFlygonHead(0.5,0.4,0.7, 40, 40);
+    let FlygonHornCurved = generateCurvedHorn_flat(0.15, 0.02, 0.9, 22, 18);
 
+    
     var Flygon = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonBody.vertices, FlygonBody.faces);
     var Belly = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonBelly.vertices, FlygonBelly.faces);
     var Head = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonHead.vertices, FlygonHead.faces);
-
+    var leftHorn = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonHornCurved.vertices, FlygonHornCurved.faces);
+    var rightHorn = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonHornCurved.vertices, FlygonHornCurved.faces);
+    
     // Belly
     LIBS.rotateX(Belly.MOVE_MATRIX, -1 * Math.PI/180)
     LIBS.translateY(Belly.MOVE_MATRIX, 0.1)
-
+    
     // Head
     LIBS.translateY(Head.MOVE_MATRIX, 3.4)
     LIBS.translateZ(Head.MOVE_MATRIX, 0.4)
     LIBS.rotateX(Head.MOVE_MATRIX, 10 * Math.PI/180)
+    
+    // Left Horn
+    LIBS.translateX(leftHorn.MOVE_MATRIX, -0.18); // left side of the head (negative X)
+    LIBS.translateY(leftHorn.MOVE_MATRIX, 0.4)
+    LIBS.translateZ(leftHorn.MOVE_MATRIX, 0.1);  // push forward out of the head
+    LIBS.rotateZ(leftHorn.MOVE_MATRIX,  140 * Math.PI/180);    // slight tilt
+    LIBS.rotateY(leftHorn.MOVE_MATRIX, -70 * Math.PI/180);     // rotate so the horn points outward
 
+    // Right Horn
+    LIBS.translateX(rightHorn.MOVE_MATRIX, 0.18); // right side of the head (positive X)
+    LIBS.translateY(rightHorn.MOVE_MATRIX, 0.4)
+    LIBS.translateZ(rightHorn.MOVE_MATRIX, 0.1);  // push forward out of the head
+    LIBS.rotateZ(rightHorn.MOVE_MATRIX,  140 * Math.PI/180);    // slight tilt
+    LIBS.rotateY(rightHorn.MOVE_MATRIX, -100 * Math.PI/180);     // rotate so the horn points outward
+
+    
     // susun hierarki
-    Flygon.childs.push(Belly);
+    Flygon.childs.push(Belly)
     Flygon.childs.push(Head)
+    Head.childs.push(leftHorn)
+    Head.childs.push(rightHorn)
     Flygon.setup();
 
     var PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
