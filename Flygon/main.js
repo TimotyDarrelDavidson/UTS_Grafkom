@@ -4,6 +4,7 @@ import { generateFlygonBodyBezier } from './BodyParts/FlygonBody.js';
 import { generateFlygonBelly } from './BodyParts/FlygonBelly.js';
 import { generateFlygonHead } from './BodyParts/FlygonHead.js';
 import { generateCurvedHorn_flat } from './BodyParts/FlygonHorn.js';
+import { generateFlygonThigh } from './BodyParts/FlygonThigh.js';
 
 function main() {
     var CANVAS = document.getElementById("mycanvas");
@@ -95,6 +96,8 @@ function main() {
     let FlygonBelly = generateFlygonBelly(0.8,0.5,1, 40, 40);
     let FlygonHead = generateFlygonHead(0.5,0.4,0.7, 40, 40);
     let FlygonHornCurved = generateCurvedHorn_flat(0.15, 0.02, 0.9, 22, 18);
+    let FlygonThigh = generateFlygonThigh(0.4,0.8,0.5, 40, 40, false);
+    let FlygonInnerThigh = generateFlygonThigh(0.4,0.8,0.5, 40, 40, true);
 
     
     var Flygon = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonBody.vertices, FlygonBody.faces);
@@ -102,6 +105,10 @@ function main() {
     var Head = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonHead.vertices, FlygonHead.faces);
     var leftHorn = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonHornCurved.vertices, FlygonHornCurved.faces);
     var rightHorn = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonHornCurved.vertices, FlygonHornCurved.faces);
+    var leftInnerThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonInnerThigh.vertices, FlygonInnerThigh.faces);
+    var leftThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonThigh.vertices, FlygonThigh.faces);
+    var rightInnerThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonInnerThigh.vertices, FlygonInnerThigh.faces);
+    var rightThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonThigh.vertices, FlygonThigh.faces);
     
     // Belly
     LIBS.rotateX(Belly.MOVE_MATRIX, -1 * Math.PI/180)
@@ -126,19 +133,39 @@ function main() {
     LIBS.rotateZ(rightHorn.MOVE_MATRIX,  140 * Math.PI/180);    // slight tilt
     LIBS.rotateY(rightHorn.MOVE_MATRIX, -100 * Math.PI/180);     // rotate so the horn points outward
 
-    
+    // Left Inner Thigh
+    LIBS.translateX(leftInnerThigh.MOVE_MATRIX, -0.7); // left side of the belly (negative X)
+    LIBS.translateZ(leftInnerThigh.MOVE_MATRIX, 0.3);
+    LIBS.rotateX(leftInnerThigh.MOVE_MATRIX,  40 * Math.PI/180);    // slight tilt
+
+    // right Inner Thigh
+    LIBS.translateX(rightInnerThigh.MOVE_MATRIX, 0.7); // right side of the belly (negative X)
+    LIBS.translateZ(rightInnerThigh.MOVE_MATRIX, 0.3);
+    LIBS.rotateX(rightInnerThigh.MOVE_MATRIX,  40 * Math.PI/180);    // slight tilt
+
+    // Outer Thighs
+    LIBS.translateY(leftThigh.MOVE_MATRIX, -0.2);
+    LIBS.scaleX(leftThigh.MOVE_MATRIX, 1.2);
+
+    LIBS.translateY(rightThigh.MOVE_MATRIX, -0.2);
+    LIBS.scaleX(rightThigh.MOVE_MATRIX, 1.2);
+
     // susun hierarki
     Flygon.childs.push(Belly)
     Flygon.childs.push(Head)
     Head.childs.push(leftHorn)
     Head.childs.push(rightHorn)
+    Belly.childs.push(leftInnerThigh)
+    Belly.childs.push(rightInnerThigh)
+    leftInnerThigh.childs.push(leftThigh)
+    rightInnerThigh.childs.push(rightThigh)
     Flygon.setup();
 
     var PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
     var VIEWMATRIX = LIBS.get_I4();
 
     LIBS.translateZ(VIEWMATRIX, -10)
-    LIBS.rotateY(VIEWMATRIX, -180 * Math.PI / 180);
+    LIBS.rotateY(Flygon.MOVE_MATRIX, -180 * Math.PI / 180);
 
     // Mouse
     var THETA = 0, PHI = 0;
@@ -149,8 +176,6 @@ function main() {
     var FRICTION = 0.05;
     var dX = 0, dY = 0;
 
-    // Control Speed using Keyboard
-    var SPEED = 0.001;
 
     var mouseDown = function (e) {
         drag = true;
@@ -173,23 +198,6 @@ function main() {
         e.preventDefault();
     };
 
-    // Keyboard WASD
-    var keyDown = function (e) {
-        if (e.key === 'w') {
-            dY -= SPEED;
-        }
-        else if (e.key === 'a') {
-            dX -= SPEED;
-        }
-        else if (e.key === 's') {
-            dY += SPEED;
-        }
-        else if (e.key === 'd') {
-            dX += SPEED;
-        }
-    };
-
-    window.addEventListener("keydown", keyDown, false);
 
     CANVAS.addEventListener("mousedown", mouseDown, false);
     CANVAS.addEventListener("mouseup", mouseUp, false);
@@ -202,42 +210,53 @@ function main() {
     Gl.clearColor(0.98, 0.94, 0.72, 1.0);
     Gl.clearDepth(1.0);
 
-    var lastTime = 0;
-    var dt = 0;
+    var autoRotate = 0;
     var animate = function (time) {
         Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
         Gl.clear(Gl.COLOR_BUFFER_BIT | Gl.DEPTH_BUFFER_BIT);
 
-        dt = time - lastTime;
-        lastTime = time;
-
+        Flygon.MOVE_MATRIX = LIBS.get_I4();
         var temp = LIBS.get_I4();
+
+        temp = LIBS.get_I4();
+        LIBS.rotateY(temp, THETA)
+        Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
+
+        temp = LIBS.get_I4();
+        LIBS.rotateX(temp, PHI)
+        Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
 
         LIBS.translateZ(temp, -0.6);
         Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
 
-        temp = LIBS.get_I4();
-        LIBS.rotateY(temp, -0.01);
-        Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
+        //Auto Rotate
+        autoRotate += 0.02;
+        if (autoRotate > Math.PI * 2) {
+            autoRotate -= Math.PI * 2;  // reset after full circle
+        }
+
+        // temp = LIBS.get_I4();
+        // LIBS.rotateY(temp, autoRotate);
+        // Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
+        // End Auto Rotate
 
         temp = LIBS.get_I4();
         LIBS.translateZ(temp, 0.6);
         Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
 
-        LIBS.rotateY(Flygon.MOVE_MATRIX,  PHI);
-        LIBS.rotateX(Flygon.MOVE_MATRIX,  THETA);
+
+        if (!drag) {
+            dX *= (1-FRICTION)
+            dY *= (1-FRICTION)
+            THETA += dX;
+            PHI += dY;
+        }
 
         Gl.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
         Gl.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
 
         Flygon.render(LIBS.get_I4());
 
-        if (!drag) {
-            dX *= (1 - FRICTION);
-            dY *= (1 - FRICTION);
-            THETA = dX;
-            PHI = dY;
-        }
 
         Gl.flush();
         requestAnimationFrame(animate);
