@@ -1,10 +1,11 @@
 import { MyObject } from './myObject.js';
 import { LIBS } from './libs.js';
-import { generateFlygonBodyBezier } from './BodyParts/FlygonBody.js';
-import { generateFlygonBelly } from './BodyParts/FlygonBelly.js';
-import { generateFlygonHead } from './BodyParts/FlygonHead.js';
-import { generateCurvedHorn_flat } from './BodyParts/FlygonHorn.js';
-import { generateFlygonThigh } from './BodyParts/FlygonThigh.js';
+import { generateFlygonBodyBezier } from './BodyParts/Body/FlygonBody.js';
+import { generateFlygonBelly } from './BodyParts/Body/FlygonBelly.js';
+import { generateFlygonHead } from './BodyParts/Head/FlygonHead.js';
+import { generateCurvedHorn_flat } from './BodyParts/Head/FlygonHorn.js';
+import { generateFlygonThigh } from './BodyParts/Legs/FlygonThigh.js';
+import { generateFlygonFeet } from './BodyParts/Legs/FlygonFeet.js';
 
 function main() {
     var CANVAS = document.getElementById("mycanvas");
@@ -96,8 +97,9 @@ function main() {
     let FlygonBelly = generateFlygonBelly(0.8,0.5,1, 40, 40);
     let FlygonHead = generateFlygonHead(0.5,0.4,0.7, 40, 40);
     let FlygonHornCurved = generateCurvedHorn_flat(0.15, 0.02, 0.9, 22, 18);
-    let FlygonThigh = generateFlygonThigh(0.4,0.8,0.5, 40, 40, false);
-    let FlygonInnerThigh = generateFlygonThigh(0.4,0.8,0.5, 40, 40, true);
+    let FlygonThigh = generateFlygonThigh(0.4,0.6,0.7, 40, 40, false);
+    let FlygonInnerThigh = generateFlygonThigh(0.4,0.7,0.5, 40, 40, true);
+    let FlygonFeet = generateFlygonFeet(0.2,0.2,1, 20, 20);
 
     
     var Flygon = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonBody.vertices, FlygonBody.faces);
@@ -109,6 +111,8 @@ function main() {
     var leftThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonThigh.vertices, FlygonThigh.faces);
     var rightInnerThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonInnerThigh.vertices, FlygonInnerThigh.faces);
     var rightThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonThigh.vertices, FlygonThigh.faces);
+    var leftFeet = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonFeet.vertices, FlygonFeet.faces);
+    var rightFeet = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonFeet.vertices, FlygonFeet.faces);
     
     // Belly
     LIBS.rotateX(Belly.MOVE_MATRIX, -1 * Math.PI/180)
@@ -144,11 +148,20 @@ function main() {
     LIBS.rotateX(rightInnerThigh.MOVE_MATRIX,  40 * Math.PI/180);    // slight tilt
 
     // Outer Thighs
-    LIBS.translateY(leftThigh.MOVE_MATRIX, -0.2);
-    LIBS.scaleX(leftThigh.MOVE_MATRIX, 1.2);
+    LIBS.translateY(leftThigh.MOVE_MATRIX, -0.1);
+    LIBS.scaleX(leftThigh.MOVE_MATRIX, 1.5);
 
-    LIBS.translateY(rightThigh.MOVE_MATRIX, -0.2);
-    LIBS.scaleX(rightThigh.MOVE_MATRIX, 1.2);
+    LIBS.translateY(rightThigh.MOVE_MATRIX, -0.1);
+    LIBS.scaleX(rightThigh.MOVE_MATRIX, 1.5);
+
+    // Feet
+    LIBS.translateY(leftFeet.MOVE_MATRIX, -0.6);
+    LIBS.translateZ(leftFeet.MOVE_MATRIX, 0.2);
+    LIBS.rotateX(leftFeet.MOVE_MATRIX,  20 * Math.PI/180);    // slight tilt
+
+    LIBS.translateY(rightFeet.MOVE_MATRIX, -0.6);
+    LIBS.translateZ(rightFeet.MOVE_MATRIX, 0.2);
+    LIBS.rotateX(rightFeet.MOVE_MATRIX,  20 * Math.PI/180);    // slight tilt
 
     // susun hierarki
     Flygon.childs.push(Belly)
@@ -159,6 +172,8 @@ function main() {
     Belly.childs.push(rightInnerThigh)
     leftInnerThigh.childs.push(leftThigh)
     rightInnerThigh.childs.push(rightThigh)
+    leftThigh.childs.push(leftFeet)
+    rightThigh.childs.push(rightFeet)
     Flygon.setup();
 
     var PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
