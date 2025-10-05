@@ -17,10 +17,10 @@ export function generateFlygonThigh(a, b, c, stacks, steps, inner) {
 
             if (!inner) {
                 // hijau gelap
-                vertices.push(214/255, 216/255, 93/255);
+                vertices.push(181/255, 235/255, 145/255);
             } else {
                 // hijau muda
-                vertices.push(50/255, 120/255, 50/255);
+                vertices.push(85/255, 170/255, 85/255);
             }
         }
     }

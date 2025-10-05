@@ -16,7 +16,7 @@ export function generateFlygonBelly(a, b, c, stacks, steps) {
             vertices.push(x, y, z);
 
             // warna gradasi hijau khas Flygon
-            vertices.push(214/255, 216/255, 93/255);
+            vertices.push(181/255, 235/255, 145/255);
         }
     }
 

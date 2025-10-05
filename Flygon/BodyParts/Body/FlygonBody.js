@@ -72,7 +72,7 @@ export function generateFlygonBodyBezier(p0, p1, p2, p3, a, b, stacks, slices) {
             vertices.push(x, y, z);
 
             // color gradient
-            vertices.push(214/255, 216/255, 93/255);
+            vertices.push(181/255, 235/255, 145/255);
         }
     }
 

@@ -30,7 +30,7 @@ export function generateCurvedHorn_flat(radiusBase, radiusTip, length, steps, sl
             verts.push(px + cx, py, pz + cz);
 
             // vertex color
-            verts.push(50/255, 120/255, 50/255);
+            verts.push(102/255, 172/255, 85/255); // dark green
         }
     }
 

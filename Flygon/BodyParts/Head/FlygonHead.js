@@ -17,10 +17,10 @@ export function generateFlygonHead(a, b, c, stacks, steps) {
 
             if (y <= 0) {
                 // hijau muda
-                vertices.push(214/255, 216/255, 93/255);
+                vertices.push(181/255, 235/255, 145/255);
             } else {
                 // hijau gelap
-                vertices.push(50/255, 120/255, 50/255);
+                vertices.push(102/255, 172/255, 85/255);
             }
         }
     }

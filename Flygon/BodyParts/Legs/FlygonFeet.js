@@ -17,10 +17,10 @@ export function generateFlygonFeet(a, b, c, stacks, steps) {
 
             if (z > 0.7 * c) {
                 // dark green claws
-                vertices.push(50/255, 120/255, 50/255);
+                vertices.push(85/255, 170/255, 85/255);
             } else {
                 // light green foot
-                vertices.push(214/255, 216/255, 93/255);
+                vertices.push(181/255, 235/255, 145/255);
             }
         }
     }
