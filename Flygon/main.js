@@ -6,6 +6,8 @@ import { generateFlygonHead } from './BodyParts/Head/FlygonHead.js';
 import { generateCurvedHorn_flat } from './BodyParts/Head/FlygonHorn.js';
 import { generateFlygonThigh } from './BodyParts/Legs/FlygonThigh.js';
 import { generateFlygonFeet } from './BodyParts/Legs/FlygonFeet.js';
+import { generateFlygonTailBezier } from './BodyParts/Tail/FlygonTail.js';
+import { generateFlygonWing } from './BodyParts/Body/FlygonWing.js';
 
 function main() {
     var CANVAS = document.getElementById("mycanvas");
@@ -17,10 +19,6 @@ function main() {
     /**
      * @type {CanvasRenderingContext2D}
      */
-
-    // var CTX = CANVAS.getContext("2d");
-    // CTX.fillStyle = "red";
-    // CTX.fillRect(0, 0, 100, 100);
 
     var Gl;
     try {
@@ -84,7 +82,6 @@ function main() {
     Gl.enableVertexAttribArray(_color);
 
     Gl.useProgram(SHADER_PROGRAM);
-    var uniform_color = Gl.getUniformLocation(SHADER_PROGRAM, "uColor");
 
     // POINTS
 
@@ -100,6 +97,8 @@ function main() {
     let FlygonThigh = generateFlygonThigh(0.4,0.6,0.7, 40, 40, false);
     let FlygonInnerThigh = generateFlygonThigh(0.4,0.7,0.5, 40, 40, true);
     let FlygonFeet = generateFlygonFeet(0.2,0.2,1, 20, 20);
+    let FlygonTail = generateFlygonTailBezier([0,0,0], [0,-3,-5], [-1,-4, 2], [0,-4,2], 0.8, 0.8, 60, 20);
+    let FlygonWing = generateFlygonWing(2.1);
 
     
     var Flygon = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonBody.vertices, FlygonBody.faces);
@@ -113,15 +112,16 @@ function main() {
     var rightThigh = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonThigh.vertices, FlygonThigh.faces);
     var leftFeet = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonFeet.vertices, FlygonFeet.faces);
     var rightFeet = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonFeet.vertices, FlygonFeet.faces);
-    
+    var tail = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonTail.vertices, FlygonTail.faces);
+    var leftWing = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonWing.vertices, FlygonWing.faces);
+    var rightWing = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, FlygonWing.vertices, FlygonWing.faces);
+
     // Belly
-    LIBS.rotateX(Belly.MOVE_MATRIX, -1 * Math.PI/180)
     LIBS.translateY(Belly.MOVE_MATRIX, 0.1)
     
     // Head
     LIBS.translateY(Head.MOVE_MATRIX, 3.4)
-    LIBS.translateZ(Head.MOVE_MATRIX, 0.4)
-    LIBS.rotateX(Head.MOVE_MATRIX, 10 * Math.PI/180)
+    LIBS.rotateX(Head.MOVE_MATRIX, -10 * Math.PI/180)
     
     // Left Horn
     LIBS.translateX(leftHorn.MOVE_MATRIX, -0.18); // left side of the head (negative X)
@@ -163,9 +163,26 @@ function main() {
     LIBS.translateZ(rightFeet.MOVE_MATRIX, 0.2);
     LIBS.rotateX(rightFeet.MOVE_MATRIX,  20 * Math.PI/180);    // slight tilt
 
+    // Position & rotate
+    LIBS.translateY(leftWing.MOVE_MATRIX, 1);
+    LIBS.translateZ(leftWing.MOVE_MATRIX, -1.7);
+    LIBS.translateX(leftWing.MOVE_MATRIX, -3);
+    LIBS.rotateX(leftWing.MOVE_MATRIX, -20 * Math.PI / 180);
+    // LIBS.rotateY(leftWing.MOVE_MATRIX, 20 * Math.PI / 180);
+    LIBS.rotateZ(leftWing.MOVE_MATRIX, 50 * Math.PI / 180);
+
+    LIBS.translateY(rightWing.MOVE_MATRIX, 1);
+    LIBS.translateZ(rightWing.MOVE_MATRIX, -1.7);
+    LIBS.translateX(rightWing.MOVE_MATRIX, 3);
+    LIBS.rotateX(rightWing.MOVE_MATRIX, -20 * Math.PI / 180);
+    // LIBS.rotateY(rightWing.MOVE_MATRIX, 20 * Math.PI / 180);
+    LIBS.rotateZ(rightWing.MOVE_MATRIX, -50 * Math.PI / 180);
+
     // susun hierarki
     Flygon.childs.push(Belly)
     Flygon.childs.push(Head)
+    Head.childs.push(leftWing)
+    Head.childs.push(rightWing)
     Head.childs.push(leftHorn)
     Head.childs.push(rightHorn)
     Belly.childs.push(leftInnerThigh)
@@ -174,6 +191,7 @@ function main() {
     rightInnerThigh.childs.push(rightThigh)
     leftThigh.childs.push(leftFeet)
     rightThigh.childs.push(rightFeet)
+    Belly.childs.push(tail)
     Flygon.setup();
 
     var PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
@@ -231,6 +249,8 @@ function main() {
         Gl.clear(Gl.COLOR_BUFFER_BIT | Gl.DEPTH_BUFFER_BIT);
 
         Flygon.MOVE_MATRIX = LIBS.get_I4();
+        // Flygon
+        LIBS.rotateX(Flygon.MOVE_MATRIX, 20 * Math.PI/180)
         var temp = LIBS.get_I4();
 
         temp = LIBS.get_I4();

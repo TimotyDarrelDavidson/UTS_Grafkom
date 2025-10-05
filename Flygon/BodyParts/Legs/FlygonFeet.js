@@ -20,7 +20,7 @@ export function generateFlygonFeet(a, b, c, stacks, steps) {
                 vertices.push(85/255, 170/255, 85/255);
             } else {
                 // light green foot
-                vertices.push(181/255, 235/255, 145/255);
+                vertices.push(171/255, 225/255, 135/255);
             }
         }
     }
