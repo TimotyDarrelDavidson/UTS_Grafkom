@@ -49,7 +49,7 @@ export function generateFlygonTailBezier(p0, p1, p2, p3, a, b, stacks, slices) {
     let binormal = normalize(cross(prevTangent, normal));
     normal = normalize(cross(binormal, prevTangent));
 
-    const lightGreen = [214/255, 216/255, 93/255]; // pale green
+    const lightGreen = [181/255, 235/255, 145/255]; // pale green
     const darkGreen  = [85/255, 170/255, 85/255];   // darker ring
 
     for (let i = 0; i <= stacks; i++) {
