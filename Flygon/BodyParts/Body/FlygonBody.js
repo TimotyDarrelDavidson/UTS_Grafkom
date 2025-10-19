@@ -25,10 +25,37 @@ export function generateFlygonBodyBezier(p0, p1, p2, p3, a, b, stacks, slices) {
 
     // radius profile: fat bottom → skinny top
     function radiusProfile(t) {
-        // t=0 bottom (fat), t=1 top (skinny)
-        return 0.3 + 0.7 * (1 - t); 
-        // try: return 1 - t;         // linear taper
-        // try: return 1 - (t-0.5)**2;// bulge in middle
+        // t = 0 di bawah (perut/ekor), t = 1 di atas (ke leher)
+        // Pilih domain v yang asimetris supaya bawah > atas
+        const vMin = -1.25;   // makin negatif -> bagian bawah makin besar
+        const vMax =  0.55;   // lebih kecil -> bagian atas tetap ramping
+        const v = vMin + (vMax - vMin) * t;
+
+        // Hyperboloid: r ~ cosh(v), minimum di v=0
+        const r      = Math.cosh(v);
+        const r0     = 1.0;                             // cosh(0)
+        const rMax   = Math.max(Math.cosh(vMin), Math.cosh(vMax));
+
+        // Normalisasi ke [0..1], kecil di tengah (pinggang), besar di ujung
+        let s = (r - r0) / (rMax - r0);
+
+        // Tebal dasar & amplitudo (atur supaya proporsional)
+        s = 0.36 + 0.64 * s;
+
+        // Sentuhan organik ringan (opsional):
+        // - pinggul (bawah) & dada (atas) sedikit menonjol
+        // - pinggang mengecil
+        s += 0.06 * Math.exp(-Math.pow((t - 0.22) / 0.16, 2)); // hip
+        s += 0.05 * Math.exp(-Math.pow((t - 0.74) / 0.14, 2)); // chest
+        s -= 0.08 * (1 - Math.exp(-Math.pow((t - 0.50) / 0.20, 2))); // waist
+        s += 0.06 * Math.exp(-Math.pow((t - 0.90) / 0.10, 2));
+
+        // Bias linear agar bawah > atas makin jelas
+        const bottomBias = 0.18;
+        s *= (1 + bottomBias * (1 - t));
+
+        // Hindari radius 0
+        return Math.max(0.12, s);
     }
 
     for (let i = 0; i <= stacks; i++) {
