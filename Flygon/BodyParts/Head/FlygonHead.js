@@ -15,7 +15,7 @@ export function generateFlygonHead(a, b, c, stacks, steps) {
 
             vertices.push(x, y, z);
 
-            if (y <= 0) {
+            if (y <= 0.15) {
                 // hijau muda
                 vertices.push(171/255, 225/255, 135/255);
             } else {

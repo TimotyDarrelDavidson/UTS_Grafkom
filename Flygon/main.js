@@ -13,6 +13,7 @@ import {
   generateHandEllipsoid,
   generateClaw,
 } from "./BodyParts/Arms/FlygonArm.js";
+import { generateFlygonEyes } from "./BodyParts/Head/Eyes/FlygonEyes.js";
 
 function main() {
   var CANVAS = document.getElementById("mycanvas");
@@ -39,11 +40,13 @@ function main() {
       vColor = color;
     }
   `;
+
   var shader_fragment_source = `
     precision mediump float;
     varying vec3 vColor;
+    uniform float uAlpha;     // NEW: per-object opacity
     void main(void) {
-      gl_FragColor = vec4(vColor, 1.);
+      gl_FragColor = vec4(vColor, uAlpha);
     }
   `;
   var compile_shader = function (source, type, typeString) {
@@ -83,6 +86,9 @@ function main() {
 
   Gl.enableVertexAttribArray(_position);
   Gl.enableVertexAttribArray(_color);
+
+  Gl.enable(Gl.BLEND);
+  Gl.blendFunc(Gl.SRC_ALPHA, Gl.ONE_MINUS_SRC_ALPHA);
   Gl.useProgram(SHADER_PROGRAM);
 
   // ─────────────── Geometry (body + parts) ───────────────
@@ -118,6 +124,10 @@ function main() {
   var RUpperArmGeo = LUpperArmGeo,
     RForeArmGeo = LForeArmGeo,
     RHandGeo = LHandGeo;
+
+  // Eyes
+  var FlygonEyes = generateFlygonEyes(0.2, 0.3, 0.4, 14, 20, [1, 0, 0]);
+  var FlygonPupils = generateFlygonEyes(0.1, 0.1, 0.15, 14, 20, [0, 0, 0]);
 
   // ─────────────── Objects ───────────────
   var Flygon = new MyObject(
@@ -360,6 +370,42 @@ function main() {
     ClawGeo.vertices,
     ClawGeo.faces
   );
+  var LEyes = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    FlygonEyes.vertices,
+    FlygonEyes.faces
+  );
+  var REyes = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    FlygonEyes.vertices,
+    FlygonEyes.faces
+  );
+  var LPupils = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    FlygonPupils.vertices,
+    FlygonPupils.faces
+  );
+  var RPupils = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    FlygonPupils.vertices,
+    FlygonPupils.faces
+  );
 
   // ─────────────── Base transforms ───────────────
   // Belly
@@ -486,6 +532,21 @@ function main() {
   LIBS.translateX(RClaw3.MOVE_MATRIX, 0.05);
   LIBS.translateZ(RClaw3.MOVE_MATRIX, 0.12);
 
+  // Eyes (child of Head)
+  LEyes.alpha = 0.6; // set transparency
+  LIBS.translateX(LPupils.MOVE_MATRIX, -0.4);
+  LIBS.translateZ(LPupils.MOVE_MATRIX, 0.38);
+  LIBS.rotateY(LPupils.MOVE_MATRIX, (20 * Math.PI) / 180);
+
+  LIBS.translateZ(LEyes.MOVE_MATRIX, -0.1);
+
+  REyes.alpha = 0.6; // set transparency
+  LIBS.translateX(RPupils.MOVE_MATRIX, 0.4);
+  LIBS.translateZ(RPupils.MOVE_MATRIX, 0.38);
+  LIBS.rotateY(RPupils.MOVE_MATRIX, (-20 * Math.PI) / 180);
+
+  LIBS.translateZ(REyes.MOVE_MATRIX, -0.1);
+
   // ─────────────── Hierarchy ───────────────
   Flygon.childs.push(Belly);
   Flygon.childs.push(Head);
@@ -518,6 +579,13 @@ function main() {
   RHand.childs.push(RClaw1);
   RHand.childs.push(RClaw2);
   RHand.childs.push(RClaw3);
+
+  // Eyes (child of Head)
+  Head.childs.push(LPupils);
+  Head.childs.push(RPupils);
+
+  LPupils.childs.push(LEyes);
+  RPupils.childs.push(REyes);
 
   // Buffer setup (recursively)
   Flygon.setup();
