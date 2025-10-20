@@ -101,7 +101,7 @@ function main() {
   var FlygonBody = generateFlygonBodyBezier(p0, p1, p2, p3, 1.0, 1.0, 96, 64);
   var FlygonBelly = generateFlygonBelly(0.8, 0.5, 1, 40, 40);
   var FlygonHead = generateFlygonHead(0.5, 0.4, 0.7, 40, 40);
-  var FlygonHornCurved = generateCurvedHorn_flat(0.15, 0.02, 0.9, 22, 18);
+  var FlygonHornCurved = generateCurvedHorn_flat(0.15, 0.02, 1,8, 22, 18);
   var FlygonThigh = generateFlygonThigh(0.4, 0.6, 0.7, 40, 40, false);
   var FlygonInnerThigh = generateFlygonThigh(0.4, 0.7, 0.5, 40, 40, true);
   var FlygonFeetGeo = generateFlygonFeet(0.2, 0.2, 1, 20, 20);

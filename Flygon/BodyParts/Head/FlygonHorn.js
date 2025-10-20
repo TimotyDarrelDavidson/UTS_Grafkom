@@ -6,7 +6,7 @@ export function generateCurvedHorn_flat(radiusBase, radiusTip, length, steps, sl
     const verts = [];
     const inds = [];
 
-    const arcAngle = Math.PI * 0.45; // 81° bend; tweak as needed
+    const arcAngle = Math.PI * 0.55; // 81° bend; tweak as needed
 
     for (let i = 0; i <= steps; i++) {
         const t = i / steps;
