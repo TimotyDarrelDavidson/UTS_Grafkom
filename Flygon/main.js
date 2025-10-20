@@ -7,6 +7,7 @@ import { generateCurvedHorn_flat } from "./BodyParts/Head/FlygonHorn.js";
 import { generateFlygonThigh } from "./BodyParts/Legs/FlygonThigh.js";
 import { generateFlygonFeet } from "./BodyParts/Legs/FlygonFeet.js";
 import { generateFlygonTailBezier } from "./BodyParts/Tail/FlygonTail.js";
+import { generateFlygonTailFins } from "./BodyParts/Tail/FlygonTailFins.js";
 import { generateFlygonWing } from "./BodyParts/Body/FlygonWing.js";
 import {
   generateArmSegment,
@@ -114,7 +115,17 @@ function main() {
     60,
     20
   );
-  var FlygonWing = generateFlygonWing(2.1);
+  var FlygonTailFins = generateFlygonTailFins(1, {
+    centerColor: [0.5, 1.0, 0.5],
+    midColor: [0.2, 0.7, 0.2],
+    edgeColor: [1.0, 0.05, 0.05],
+    borderWidth: 0.22,
+    twoSided: true,
+    spreadDeg: 50, // a bit wider fan
+    sideSeparation: 0.5, // NEW: pushes the side fins apart
+    stackZGap: 0.001, // NEW: puts them on separate tiny z layers
+  });
+  var FlygonWing = generateFlygonWing(2.3);
 
   // Arms (short, tapered)
   var LUpperArmGeo = generateArmSegment(0.14, 0.11, 0.1, 0.08, 0.52, 24, 20);
@@ -241,6 +252,15 @@ function main() {
     _Mmatrix,
     FlygonTail.vertices,
     FlygonTail.faces
+  );
+  var tailFins = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    FlygonTailFins.vertices,
+    FlygonTailFins.faces
   );
   var leftWing = new MyObject(
     Gl,
@@ -564,6 +584,7 @@ function main() {
   rightThigh.childs.push(rightFeet);
 
   Belly.childs.push(tail);
+  tail.childs.push(tailFins);
 
   // Arms hierarchy
   Belly.childs.push(LUpperArm);
@@ -634,6 +655,54 @@ function main() {
   CANVAS.addEventListener("mouseout", mouseUp, false);
   CANVAS.addEventListener("mousemove", mouseMove, false);
 
+  // --- Tail fins: auto-place to tail tip & orient to tail direction ---
+
+  function getTipBaseFromVertices(vtx) {
+    // vertices are [x,y,z,r,g,b,...]
+    let minY = Infinity,
+      maxY = -Infinity;
+    let tip = [0, 0, 0],
+      base = [0, 0, 0];
+
+    for (let i = 0; i < vtx.length; i += 6) {
+      const x = vtx[i + 0],
+        y = vtx[i + 1],
+        z = vtx[i + 2];
+
+      if (y < minY) {
+        minY = y;
+        tip = [x, y, z];
+      }
+      if (y > maxY) {
+        maxY = y;
+        base = [x, y, z];
+      }
+    }
+    return { tip, base };
+  }
+
+  const { tip, base } = getTipBaseFromVertices(FlygonTail.vertices);
+
+  // direction from base->tip (tail axis)
+  let dx = tip[0] - base[0],
+    dy = tip[1] - base[1],
+    dz = tip[2] - base[2];
+  const len = Math.hypot(dx, dy, dz) || 1.0;
+  dx /= len;
+  dy /= len;
+  dz /= len;
+
+  // We want the fins' plane normal (starts at +Z for our fins geometry) to align with tail axis.
+  // Convert direction vector to yaw/pitch that rotates +Z to (dx,dy,dz).
+  const yaw = Math.atan2(dx, dz); // rotate around Y to line up XZ
+  const pitch = -Math.atan2(dy, Math.hypot(dx, dz)); // then pitch around X to add Y
+
+  // tiny push past the tip so the red rim doesn't clip into the tail
+  const push = 0.04; // tweak if needed
+  const px = tip[0] + dx * push;
+  const py = tip[1] + dy * push;
+  const pz = tip[2] + dz * push;
+
   // ─────────────── Draw loop ───────────────
   Gl.enable(Gl.DEPTH_TEST);
   Gl.depthFunc(Gl.LEQUAL);
@@ -658,6 +727,19 @@ function main() {
 
     LIBS.translateZ(temp, -0.6);
     Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
+
+    // Reset and place fins in tail-local space
+    LIBS.set_I4(tailFins.MOVE_MATRIX);
+    LIBS.translateX(tailFins.MOVE_MATRIX, px);
+    LIBS.translateY(tailFins.MOVE_MATRIX, py);
+    LIBS.translateZ(tailFins.MOVE_MATRIX, pz + 0.5);
+
+    // Orient the fins so their normal follows the tail axis
+    LIBS.rotateY(tailFins.MOVE_MATRIX, yaw);
+    LIBS.rotateX(tailFins.MOVE_MATRIX, pitch);
+
+    // after: rotateY(...yaw); rotateX(...pitch);
+    LIBS.rotateY(tailFins.MOVE_MATRIX, Math.PI); // turn to face the other way
 
     autoRotate += 0.02;
     if (autoRotate > Math.PI * 2) autoRotate -= Math.PI * 2;
