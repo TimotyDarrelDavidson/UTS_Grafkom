@@ -1,27 +1,26 @@
 import { MyObject } from './myObject.js';
 import { LIBS } from './libs.js';
-import { generateBadanWithStripes } from './badan.js';
+import { generateBadanVibrava } from './badan.js';
 import { generateKepala } from './kepala.js';
 import { generateMata } from './mata.js';
 
-
 function main() {
-    var CANVAS = document.getElementById("mycanvas");
+  var CANVAS = document.getElementById("mycanvas");
 
-    CANVAS.width = window.innerWidth;
-    CANVAS.height = window.innerHeight;
+  CANVAS.width = window.innerWidth;
+  CANVAS.height = window.innerHeight;
 
-    var Gl;
-    try {
-        Gl = CANVAS.getContext("webgl", { antialias: true });
-    } catch (e) {
-        alert("WebGL not supported");
-        console.log(e);
-        return false;
-    }
+  var Gl;
+  try {
+    Gl = CANVAS.getContext("webgl", { antialias: true });
+  } catch (e) {
+    alert("WebGL not supported");
+    console.log(e);
+    return false;
+  }
 
-    // Shaders
-    var shader_vertex_source = `
+  // --- Shaders (now support opacity via uAlpha uniform) ---
+  var shader_vertex_source = `
     attribute vec3 position;
     uniform mat4 Pmatrix, Vmatrix, Mmatrix;
     attribute vec3 color;
@@ -31,185 +30,164 @@ function main() {
         gl_Position = Pmatrix * Vmatrix * Mmatrix * vec4(position, 1.0);
         vColor = color;
     }
-    `;
+  `;
 
-    var shader_fragment_source = `
+  var shader_fragment_source = `
     precision mediump float;
     varying vec3 vColor;
+    uniform float uAlpha;   // per-object opacity
 
     void main(void) {
-        gl_FragColor = vec4(vColor, 1.0);
+        gl_FragColor = vec4(vColor, uAlpha);
     }
-    `;
+  `;
 
-    var compile_shader = function (source, type, typeString) {
-        var shader = Gl.createShader(type);
-        Gl.shaderSource(shader, source);
-        Gl.compileShader(shader);
-        if (!Gl.getShaderParameter(shader, Gl.COMPILE_STATUS)) {
-            console.error("Error in " + typeString + " shader: " + Gl.getShaderInfoLog(shader));
-            Gl.deleteShader(shader);
-            return null;
-        }
-        return shader;
-    };
+  var compile_shader = function (source, type, typeString) {
+    var shader = Gl.createShader(type);
+    Gl.shaderSource(shader, source);
+    Gl.compileShader(shader);
+    if (!Gl.getShaderParameter(shader, Gl.COMPILE_STATUS)) {
+      console.error("Error in " + typeString + " shader: " + Gl.getShaderInfoLog(shader));
+      Gl.deleteShader(shader);
+      return null;
+    }
+    return shader;
+  };
 
-    var SHADER_PROGRAM = Gl.createProgram();
-    var shader_vertex = compile_shader(shader_vertex_source, Gl.VERTEX_SHADER, "vertex");
-    var shader_fragment = compile_shader(shader_fragment_source, Gl.FRAGMENT_SHADER, "fragment");
+  var SHADER_PROGRAM = Gl.createProgram();
+  var shader_vertex = compile_shader(shader_vertex_source, Gl.VERTEX_SHADER, "vertex");
+  var shader_fragment = compile_shader(shader_fragment_source, Gl.FRAGMENT_SHADER, "fragment");
 
-    Gl.attachShader(SHADER_PROGRAM, shader_vertex);
-    Gl.attachShader(SHADER_PROGRAM, shader_fragment);
-    Gl.linkProgram(SHADER_PROGRAM);
+  Gl.attachShader(SHADER_PROGRAM, shader_vertex);
+  Gl.attachShader(SHADER_PROGRAM, shader_fragment);
+  Gl.linkProgram(SHADER_PROGRAM);
 
-    var _position = Gl.getAttribLocation(SHADER_PROGRAM, "position");
-    var _color = Gl.getAttribLocation(SHADER_PROGRAM, "color");
-    var _Pmatrix = Gl.getUniformLocation(SHADER_PROGRAM, "Pmatrix");
-    var _Vmatrix = Gl.getUniformLocation(SHADER_PROGRAM, "Vmatrix");
-    var _Mmatrix = Gl.getUniformLocation(SHADER_PROGRAM, "Mmatrix");
+  var _position = Gl.getAttribLocation(SHADER_PROGRAM, "position");
+  var _color = Gl.getAttribLocation(SHADER_PROGRAM, "color");
+  var _Pmatrix = Gl.getUniformLocation(SHADER_PROGRAM, "Pmatrix");
+  var _Vmatrix = Gl.getUniformLocation(SHADER_PROGRAM, "Vmatrix");
+  var _Mmatrix = Gl.getUniformLocation(SHADER_PROGRAM, "Mmatrix");
 
-    Gl.enableVertexAttribArray(_position);
-    Gl.enableVertexAttribArray(_color);
+  Gl.enableVertexAttribArray(_position);
+  Gl.enableVertexAttribArray(_color);
 
-    Gl.useProgram(SHADER_PROGRAM);
+  Gl.useProgram(SHADER_PROGRAM);
 
-    // Generate Badan
-    var bodyData = generateBadanWithStripes(3.0, 1.2, 1.2, 30, 30, 3); 
+  // --- Enable blending for opacity ---
+  Gl.enable(Gl.DEPTH_TEST);
+  Gl.depthFunc(Gl.LEQUAL);
+  Gl.enable(Gl.BLEND);
+  Gl.blendFunc(Gl.SRC_ALPHA, Gl.ONE_MINUS_SRC_ALPHA);
 
-    var BODY_VERTEX = bodyData.vertices;
-    var BODY_FACES = bodyData.faces;
+  Gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  Gl.clearDepth(1.0);
 
-    var Body = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, BODY_VERTEX, BODY_FACES);
-    Body.setup();
+  // Generate geometry
+  var bodyData = generateBadanVibrava(8, 0.8, 0.2, 120, 48);
+  var headData = generateKepala(1.4, 1.3, 1.4, 30, 30);
+  var leftEyeData = generateMata(0.8, 2.5, 1.0, 0.0, 0.4, 20, 20);
+  var rightEyeData = leftEyeData;
 
-    // Generate Kepala
-    var headData = generateKepala(1.5, 1.2, 1.2, 30, 30);    
-    var HEAD_VERTEX = headData.vertices;
-    var HEAD_FACES = headData.faces;
+  var Body = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, bodyData.vertices, bodyData.faces);
+  var Head = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, headData.vertices, headData.faces);
+  var LeftEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, leftEyeData.vertices, leftEyeData.faces);
+  var RightEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, rightEyeData.vertices, rightEyeData.faces);
 
-    var Head = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, HEAD_VERTEX, HEAD_FACES);
-    Head.setup();
+  // Example: set eye opacity (optional)
+  LeftEye.alpha = 0.4;
+  RightEye.alpha = 1.0;
 
-   // Mata kiri (ke samping kiri kepala)
-    var leftEyeData = generateMata(0.8, 2.5, 1.0, 0.0, 0.4, 20, 20);
-    var LeftEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, leftEyeData.vertices, leftEyeData.faces);
+  LIBS.translateX(Head.MOVE_MATRIX, 4.8);
+  LIBS.translateZ(LeftEye.MOVE_MATRIX, 2);
 
-    // Mata kanan (ke samping kanan kepala)
-    var rightEyeData = generateMata(0.8, 2.5, -1.0, 0.0, -0.4, 20, 20);
-    var RightEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, rightEyeData.vertices, rightEyeData.faces);
+  Head.childs.push(LeftEye);
+  Head.childs.push(RightEye);
 
-    // Masukkan sebagai child dari kepala
-    Head.childs.push(LeftEye);
-    Head.childs.push(RightEye);
+  Body.childs.push(Head);
 
+  Body.setup();
 
-    // Geser kepala ke depan badan
-    LIBS.translateX(Head.MOVE_MATRIX, 3.5);
+  var PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
+  var VIEWMATRIX = LIBS.get_I4();
+  var zoom = -20; // initial camera
 
-    // pasang hierarchy: kepala anak dari badan
-    Body.childs.push(Head);
+  LIBS.translateZ(VIEWMATRIX, zoom);
 
-    // Setup semua object
-    Body.setup();
+  // Mouse
+  var THETA = 0, PHI = 0;
+  var drag = false;
+  var x_prev, y_prev;
 
-    // Matrix kamera
-    var PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
-    var VIEWMATRIX = LIBS.get_I4();
+  var FRICTION = 0.05;
+  var dX = 0, dY = 0;
+  var SPEED = 0.05;
+
+  var mouseDown = function (e) {
+    drag = true;
+    x_prev = e.pageX, y_prev = e.pageY;
+    e.preventDefault();
+    return false;
+  };
+
+  var mouseUp = function (e) { drag = false; };
+
+  var mouseMove = function (e) {
+    if (!drag) return false;
+    dX = (e.pageX - x_prev) * 2 * Math.PI / CANVAS.width;
+    dY = (e.pageY - y_prev) * 2 * Math.PI / CANVAS.height;
+    THETA += dX;
+    PHI += dY;
+    x_prev = e.pageX, y_prev = e.pageY;
+    e.preventDefault();
+  };
+
+  var mouseWheel = function (e) {
+    e.preventDefault();
+    var delta = e.deltaY * 0.05;
+    zoom += delta;
+    zoom = Math.min(-5, Math.max(-50, zoom));
+  };
+
+  var keyDown = function (e) {
+    if (e.key === 'w') dY -= SPEED;
+    else if (e.key === 'a') dX -= SPEED;
+    else if (e.key === 's') dY += SPEED;
+    else if (e.key === 'd') dX += SPEED;
+  };
+
+  window.addEventListener("keydown", keyDown, false);
+  CANVAS.addEventListener("mousedown", mouseDown, false);
+  CANVAS.addEventListener("mouseup", mouseUp, false);
+  CANVAS.addEventListener("mouseout", mouseUp, false);
+  CANVAS.addEventListener("mousemove", mouseMove, false);
+  CANVAS.addEventListener("wheel", mouseWheel, false);
+
+  var animate = function () {
+    Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
+    Gl.clear(Gl.COLOR_BUFFER_BIT | Gl.DEPTH_BUFFER_BIT);
+
+    Gl.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
+    Gl.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
+
+    var MODEL = LIBS.get_I4();
+    LIBS.rotateY(MODEL, THETA);
+    LIBS.rotateX(MODEL, PHI);
+    LIBS.set_I4(VIEWMATRIX);
     LIBS.translateZ(VIEWMATRIX, zoom);
 
-    // Mouse
-    var THETA = 0, PHI = 0;
-    var drag = false;
-    var x_prev, y_prev;
+    Body.render(MODEL);
 
-    var FRICTION = 0.05;
-    var dX = 0, dY = 0;
-    var SPEED = 0.05;
+    if (!drag) {
+      dX *= (1 - FRICTION);
+      dY *= (1 - FRICTION);
+      THETA += dX;
+      PHI += dY;
+    }
 
-    var mouseDown = function (e) {
-        drag = true;
-        x_prev = e.pageX, y_prev = e.pageY;
-        e.preventDefault();
-        return false;
-    };
-
-    var mouseUp = function (e) {
-        drag = false;
-    };
-
-    var mouseMove = function (e) {
-        if (!drag) return false;
-        dX = (e.pageX - x_prev) * 2 * Math.PI / CANVAS.width;
-        dY = (e.pageY - y_prev) * 2 * Math.PI / CANVAS.height;
-        THETA += dX;
-        PHI += dY;
-        x_prev = e.pageX, y_prev = e.pageY;
-        e.preventDefault();
-    };
-
-    var zoom = -20; // posisi awal kamera
-
-    // Event untuk scroll zoom
-    var mouseWheel = function (e) {
-        e.preventDefault();
-        var delta = e.deltaY * 0.05; // sensitivitas zoom
-        zoom += delta;
-
-        // batasi biar ga terlalu dekat atau jauh
-        zoom = Math.min(-5, Math.max(-50, zoom));
-    };
-
-    var keyDown = function (e) {
-        if (e.key === 'w') dY -= SPEED;
-        else if (e.key === 'a') dX -= SPEED;
-        else if (e.key === 's') dY += SPEED;
-        else if (e.key === 'd') dX += SPEED;
-    };
-
-    window.addEventListener("keydown", keyDown, false);
-    CANVAS.addEventListener("mousedown", mouseDown, false);
-    CANVAS.addEventListener("mouseup", mouseUp, false);
-    CANVAS.addEventListener("mouseout", mouseUp, false);
-    CANVAS.addEventListener("mousemove", mouseMove, false);
-    CANVAS.addEventListener("wheel", mouseWheel, false);
-
-    // Drawing
-    Gl.enable(Gl.DEPTH_TEST);
-    Gl.depthFunc(Gl.LEQUAL);
-    Gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    Gl.clearDepth(1.0);
-
-    var lastTime = 0;
-    var animate = function (time) {
-        Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
-        Gl.clear(Gl.COLOR_BUFFER_BIT | Gl.DEPTH_BUFFER_BIT);
-
-        Gl.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
-        Gl.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
-
-        // Buat matriks model identity
-        var MODEL = LIBS.get_I4();
-
-        // Apply rotasi berdasarkan mouse
-        LIBS.rotateY(MODEL, THETA);
-        LIBS.rotateX(MODEL, PHI);
-        LIBS.set_I4(VIEWMATRIX);
-        LIBS.translateZ(VIEWMATRIX, zoom);
-
-        // render badan pakai model matrix yg sudah diputar
-        Body.render(MODEL);
-
-        if (!drag) {
-            dX *= (1 - FRICTION);
-            dY *= (1 - FRICTION);
-            THETA += dX;
-            PHI += dY;
-        }
-
-        Gl.flush();
-        requestAnimationFrame(animate);
-    };
-    animate(0);
+    Gl.flush();
+    requestAnimationFrame(animate);
+  };
+  animate(0);
 }
 
 window.addEventListener('load', main);
