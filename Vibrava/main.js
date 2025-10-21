@@ -85,25 +85,35 @@ function main() {
   // Generate geometry
   var bodyData = generateBadanVibrava(8, 0.8, 0.2, 120, 48);
   var headData = generateKepala(1.4, 1.3, 1.4, 30, 30);
-  var leftEyeData = generateMata(0.8, 2.5, 1.0, 0.0, 0.4, 20, 20);
+  var leftEyeData = generateMata(0.8, 20, 20);
+  var leftRetinaData = generateMata(0.4, 20, 20, [0, 0, 0]); 
   var rightEyeData = leftEyeData;
+  var rightRetinaData = leftRetinaData;
 
   var Body = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, bodyData.vertices, bodyData.faces);
   var Head = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, headData.vertices, headData.faces);
   var LeftEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, leftEyeData.vertices, leftEyeData.faces);
   var RightEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, rightEyeData.vertices, rightEyeData.faces);
+  var LeftRetina = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, leftRetinaData.vertices, leftRetinaData.faces);
+  var RightRetina = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, rightRetinaData.vertices, rightRetinaData.faces);
+
+  // Positioning
+  LIBS.translateX(Head.MOVE_MATRIX, 4.8);
 
   // Example: set eye opacity (optional)
   LeftEye.alpha = 0.4;
-  RightEye.alpha = 1.0;
+  RightEye.alpha = 0.4;
 
-  LIBS.translateX(Head.MOVE_MATRIX, 4.8);
-  LIBS.translateZ(LeftEye.MOVE_MATRIX, 2);
-
-  Head.childs.push(LeftEye);
-  Head.childs.push(RightEye);
+//   LIBS.translateZ(LeftEye.MOVE_MATRIX, 1.3);
+//   LIBS.translateZ(RightEye.MOVE_MATRIX, -1.3);
+  LIBS.translateZ(LeftRetina.MOVE_MATRIX, 1.4);
+  LIBS.translateZ(RightRetina.MOVE_MATRIX, -1.4);
 
   Body.childs.push(Head);
+  Head.childs.push(LeftRetina);
+  Head.childs.push(RightRetina);
+  LeftRetina.childs.push(LeftEye);
+  RightRetina.childs.push(RightEye);
 
   Body.setup();
 

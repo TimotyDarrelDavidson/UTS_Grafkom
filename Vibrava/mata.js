@@ -1,70 +1,39 @@
-// mata.js — versi perbaikan arah & posisi
-export function generateMata(radius, offsetX, offsetY, offsetZ, tiltAngle, stack, step) {
-    var vertices = [];
-    var faces = [];
+// mata.js — minimal ellipsoid generator
+export function generateMata(radius = 1.0, stacks = 20, slices = 20, color = [0., 100/255, 0.]) {
+  const vertices = [];
+  const faces = [];
 
-    // === Bola mata hijau ===
-    for (var i = 0; i <= stack; i++) {
-        var u = i / stack * Math.PI - (Math.PI / 2);
-        for (var j = 0; j <= step; j++) {
-            var v = j / step * 2 * Math.PI;
+  const sx = radius * 1.0;   // X axis
+  const sy = radius * 1;  // Y axis (slightly squashed)
+  const sz = radius * 0.8;   // Z axis (slightly elongated)
 
-            // bentuk ellipsoid
-            var x = radius * Math.cos(u) * Math.cos(v);
-            var y = radius * Math.cos(u) * Math.sin(v);
-            var z = radius * Math.sin(u);
+  for (let i = 0; i <= stacks; i++) {
+    const theta = (i / stacks) * Math.PI - Math.PI / 2;
+    const cosT = Math.cos(theta);
+    const sinT = Math.sin(theta);
 
-            // rotasi keluar (sekitar Z)
-            var yTilt = y * Math.cos(tiltAngle) - x * Math.sin(tiltAngle);
-            var xTilt = y * Math.sin(tiltAngle) + x * Math.cos(tiltAngle);
+    for (let j = 0; j <= slices; j++) {
+      const phi = (j / slices) * 2 * Math.PI;
+      const cosP = Math.cos(phi);
+      const sinP = Math.sin(phi);
 
-            vertices.push(xTilt + offsetX, yTilt + offsetY, z + offsetZ);
-            vertices.push(0.3, 0.8, 0.3); // warna hijau terang
-        }
+      const x = sx * cosT * cosP;
+      const y = sy * cosT * sinP;
+      const z = sz * sinT;
+
+      vertices.push(x, y, z, ...color);
     }
+  }
 
-    for (var i = 0; i < stack; i++) {
-        for (var j = 0; j < step; j++) {
-            var first = i * (step + 1) + j;
-            var second = first + 1;
-            var third = first + (step + 1);
-            var fourth = third + 1;
-
-            faces.push(first, second, fourth);
-            faces.push(first, fourth, third);
-        }
+  for (let i = 0; i < stacks; i++) {
+    for (let j = 0; j < slices; j++) {
+      const a = i * (slices + 1) + j;
+      const b = a + 1;
+      const c = a + (slices + 1);
+      const d = c + 1;
+      faces.push(a, b, d, a, d, c);
     }
+  }
 
-    // === Pupil hitam datar di depan mata ===
-    var pupilBase = vertices.length / 6;
-    var pupilRadius = radius * 0.7;
-    var pupilDepth = radius * 0.95;
-
-    for (var j = 0; j <= step; j++) {
-        var angle = j / step * 2 * Math.PI;
-
-        var x = pupilDepth;
-        var y = pupilRadius * Math.cos(angle);
-        var z = pupilRadius * Math.sin(angle);
-
-        // rotasi pupil ke arah tilt
-        var yTilt = y * Math.cos(tiltAngle) - x * Math.sin(tiltAngle);
-        var xTilt = y * Math.sin(tiltAngle) + x * Math.cos(tiltAngle);
-
-        // geser ke posisi mata
-        vertices.push(xTilt + offsetX, yTilt + offsetY, z + offsetZ);
-        vertices.push(0.0, 0.0, 0.0);
-    }
-
-    vertices.push(offsetX + pupilDepth * Math.cos(tiltAngle),
-                  offsetY + pupilDepth * Math.sin(tiltAngle),
-                  offsetZ);
-    vertices.push(0.0, 0.0, 0.0);
-
-    var centerIdx = pupilBase + step + 1;
-    for (var j = 0; j < step; j++) {
-        faces.push(centerIdx, pupilBase + j, pupilBase + j + 1);
-    }
-
-    return { vertices, faces };
+  return { vertices, faces };
 }
