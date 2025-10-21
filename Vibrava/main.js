@@ -1,8 +1,9 @@
-import { MyObject } from './myObject.js';
-import { LIBS } from './libs.js';
-import { generateBadanVibrava } from './badan.js';
-import { generateKepala } from './kepala.js';
-import { generateMata } from './mata.js';
+import { MyObject } from "./myObject.js";
+import { LIBS } from "./libs.js";
+import { generateBadanVibrava } from "./badan.js";
+import { generateKepala } from "./kepala.js";
+import { generateMata } from "./mata.js";
+import { generateCurvedCone } from "./horn.js";
 
 function main() {
   var CANVAS = document.getElementById("mycanvas");
@@ -47,7 +48,9 @@ function main() {
     Gl.shaderSource(shader, source);
     Gl.compileShader(shader);
     if (!Gl.getShaderParameter(shader, Gl.COMPILE_STATUS)) {
-      console.error("Error in " + typeString + " shader: " + Gl.getShaderInfoLog(shader));
+      console.error(
+        "Error in " + typeString + " shader: " + Gl.getShaderInfoLog(shader)
+      );
       Gl.deleteShader(shader);
       return null;
     }
@@ -55,8 +58,16 @@ function main() {
   };
 
   var SHADER_PROGRAM = Gl.createProgram();
-  var shader_vertex = compile_shader(shader_vertex_source, Gl.VERTEX_SHADER, "vertex");
-  var shader_fragment = compile_shader(shader_fragment_source, Gl.FRAGMENT_SHADER, "fragment");
+  var shader_vertex = compile_shader(
+    shader_vertex_source,
+    Gl.VERTEX_SHADER,
+    "vertex"
+  );
+  var shader_fragment = compile_shader(
+    shader_fragment_source,
+    Gl.FRAGMENT_SHADER,
+    "fragment"
+  );
 
   Gl.attachShader(SHADER_PROGRAM, shader_vertex);
   Gl.attachShader(SHADER_PROGRAM, shader_fragment);
@@ -86,16 +97,92 @@ function main() {
   var bodyData = generateBadanVibrava(8, 0.8, 0.2, 120, 48);
   var headData = generateKepala(1.4, 1.3, 1.4, 30, 30);
   var leftEyeData = generateMata(0.8, 20, 20);
-  var leftRetinaData = generateMata(0.4, 20, 20, [0, 0, 0]); 
+  var leftRetinaData = generateMata(0.4, 20, 20, [0, 0, 0]);
   var rightEyeData = leftEyeData;
   var rightRetinaData = leftRetinaData;
+  var leftHornData = generateCurvedCone({
+    length: 3,
+    baseRadius: 0.22,
+    tipRadius: 0.03,
+    stacks: 40,
+    slices: 28,
+    bendAngle: Math.PI / 9, // 20°
+    bendAxis: "z", // curve up/down
+  });
+  var rightHornData = leftHornData;
 
-  var Body = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, bodyData.vertices, bodyData.faces);
-  var Head = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, headData.vertices, headData.faces);
-  var LeftEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, leftEyeData.vertices, leftEyeData.faces);
-  var RightEye = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, rightEyeData.vertices, rightEyeData.faces);
-  var LeftRetina = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, leftRetinaData.vertices, leftRetinaData.faces);
-  var RightRetina = new MyObject(Gl, SHADER_PROGRAM, _position, _color, _Mmatrix, rightRetinaData.vertices, rightRetinaData.faces);
+  var Body = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    bodyData.vertices,
+    bodyData.faces
+  );
+  var Head = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    headData.vertices,
+    headData.faces
+  );
+  var LeftEye = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    leftEyeData.vertices,
+    leftEyeData.faces
+  );
+  var RightEye = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    rightEyeData.vertices,
+    rightEyeData.faces
+  );
+  var LeftRetina = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    leftRetinaData.vertices,
+    leftRetinaData.faces
+  );
+  var RightRetina = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    rightRetinaData.vertices,
+    rightRetinaData.faces
+  );
+  var LeftHorn = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    leftHornData.vertices,
+    leftHornData.faces
+  );
+  var RightHorn = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    rightHornData.vertices,
+    rightHornData.faces
+  );
 
   // Positioning
   LIBS.translateX(Head.MOVE_MATRIX, 4.8);
@@ -104,50 +191,66 @@ function main() {
   LeftEye.alpha = 0.4;
   RightEye.alpha = 0.4;
 
-//   LIBS.translateZ(LeftEye.MOVE_MATRIX, 1.3);
-//   LIBS.translateZ(RightEye.MOVE_MATRIX, -1.3);
+  //   LIBS.translateZ(LeftEye.MOVE_MATRIX, 1.3);
+  //   LIBS.translateZ(RightEye.MOVE_MATRIX, -1.3);
   LIBS.translateZ(LeftRetina.MOVE_MATRIX, 1.4);
   LIBS.translateZ(RightRetina.MOVE_MATRIX, -1.4);
 
+  LIBS.rotateY(LeftHorn.MOVE_MATRIX, Math.PI/9); // point backwards
+  LIBS.rotateY(RightHorn.MOVE_MATRIX, -Math.PI/9); // point backwards
+
+  // Hieararchy
   Body.childs.push(Head);
   Head.childs.push(LeftRetina);
   Head.childs.push(RightRetina);
   LeftRetina.childs.push(LeftEye);
   RightRetina.childs.push(RightEye);
 
+  Head.childs.push(LeftHorn);
+  Head.childs.push(RightHorn);
+
   Body.setup();
 
-  var PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
+  var PROJMATRIX = LIBS.get_projection(
+    60,
+    CANVAS.width / CANVAS.height,
+    1,
+    100
+  );
   var VIEWMATRIX = LIBS.get_I4();
   var zoom = -20; // initial camera
 
   LIBS.translateZ(VIEWMATRIX, zoom);
 
   // Mouse
-  var THETA = 0, PHI = 0;
+  var THETA = 0,
+    PHI = 0;
   var drag = false;
   var x_prev, y_prev;
 
   var FRICTION = 0.05;
-  var dX = 0, dY = 0;
+  var dX = 0,
+    dY = 0;
   var SPEED = 0.05;
 
   var mouseDown = function (e) {
     drag = true;
-    x_prev = e.pageX, y_prev = e.pageY;
+    (x_prev = e.pageX), (y_prev = e.pageY);
     e.preventDefault();
     return false;
   };
 
-  var mouseUp = function (e) { drag = false; };
+  var mouseUp = function (e) {
+    drag = false;
+  };
 
   var mouseMove = function (e) {
     if (!drag) return false;
-    dX = (e.pageX - x_prev) * 2 * Math.PI / CANVAS.width;
-    dY = (e.pageY - y_prev) * 2 * Math.PI / CANVAS.height;
+    dX = ((e.pageX - x_prev) * 2 * Math.PI) / CANVAS.width;
+    dY = ((e.pageY - y_prev) * 2 * Math.PI) / CANVAS.height;
     THETA += dX;
     PHI += dY;
-    x_prev = e.pageX, y_prev = e.pageY;
+    (x_prev = e.pageX), (y_prev = e.pageY);
     e.preventDefault();
   };
 
@@ -159,10 +262,10 @@ function main() {
   };
 
   var keyDown = function (e) {
-    if (e.key === 'w') dY -= SPEED;
-    else if (e.key === 'a') dX -= SPEED;
-    else if (e.key === 's') dY += SPEED;
-    else if (e.key === 'd') dX += SPEED;
+    if (e.key === "w") dY -= SPEED;
+    else if (e.key === "a") dX -= SPEED;
+    else if (e.key === "s") dY += SPEED;
+    else if (e.key === "d") dX += SPEED;
   };
 
   window.addEventListener("keydown", keyDown, false);
@@ -188,8 +291,8 @@ function main() {
     Body.render(MODEL);
 
     if (!drag) {
-      dX *= (1 - FRICTION);
-      dY *= (1 - FRICTION);
+      dX *= 1 - FRICTION;
+      dY *= 1 - FRICTION;
       THETA += dX;
       PHI += dY;
     }
@@ -200,4 +303,4 @@ function main() {
   animate(0);
 }
 
-window.addEventListener('load', main);
+window.addEventListener("load", main);
