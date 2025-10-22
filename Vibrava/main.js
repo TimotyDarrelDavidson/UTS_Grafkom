@@ -4,6 +4,7 @@ import { generateBadanVibrava } from "./badan.js";
 import { generateKepala } from "./kepala.js";
 import { generateMata } from "./mata.js";
 import { generateCurvedCone } from "./horn.js";
+import { generateWing } from "./wings.js";
 
 function main() {
   var CANVAS = document.getElementById("mycanvas");
@@ -110,6 +111,13 @@ function main() {
     bendAxis: "z", // curve up/down
   });
   var rightHornData = leftHornData;
+  var wingData = generateWing({
+    w: 1,
+    h: 2,
+    z: 0,
+    color: [0.26, 0.86, 0.24], // bright green
+    twoSided: true,
+  });
 
   var Body = new MyObject(
     Gl,
@@ -183,6 +191,42 @@ function main() {
     rightHornData.vertices,
     rightHornData.faces
   );
+  var LeftTopWing = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    wingData.vertices,
+    wingData.faces
+  );
+  var LeftBottomWing = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    wingData.vertices,
+    wingData.faces
+  );
+  var RightTopWing = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    wingData.vertices,
+    wingData.faces
+  );
+  var RightBottomWing = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    wingData.vertices,
+    wingData.faces
+  );
 
   // Positioning
   LIBS.translateX(Head.MOVE_MATRIX, 4.8);
@@ -191,25 +235,53 @@ function main() {
   LeftEye.alpha = 0.4;
   RightEye.alpha = 0.4;
 
-  //   LIBS.translateZ(LeftEye.MOVE_MATRIX, 1.3);
-  //   LIBS.translateZ(RightEye.MOVE_MATRIX, -1.3);
+  // LIBS.rotateY(LeftTopWing.MOVE_MATRIX, Math.PI / 2); // 45°
+  // LIBS.rotateZ(LeftTopWing.MOVE_MATRIX, Math.PI / 3); // 30°
+  // LIBS.rotateY(LeftTopWing.MOVE_MATRIX, Math.PI / 6); // 45°
+  // LIBS.translateY(LeftTopWing.MOVE_MATRIX, 1.9);
+  // LIBS.translateX(LeftTopWing.MOVE_MATRIX, 1.4);
+  // LIBS.translateZ(LeftTopWing.MOVE_MATRIX, 1.4);
+
+  // LIBS.rotateY(LeftBottomWing.MOVE_MATRIX, Math.PI / 2); // 45°
+  // LIBS.rotateZ(LeftBottomWing.MOVE_MATRIX, Math.PI / 2); // 30°
+  // LIBS.rotateY(LeftBottomWing.MOVE_MATRIX, Math.PI / 6); // 45°
+  // LIBS.translateY(LeftBottomWing.MOVE_MATRIX, 1.9);
+  // LIBS.translateX(LeftBottomWing.MOVE_MATRIX, 1.4);
+  // LIBS.translateZ(LeftBottomWing.MOVE_MATRIX, 1.4);
+
   LIBS.translateZ(LeftRetina.MOVE_MATRIX, 1.4);
   LIBS.translateZ(RightRetina.MOVE_MATRIX, -1.4);
+  
+  LIBS.rotateY(LeftHorn.MOVE_MATRIX, Math.PI / 9); // point backwards
+  LIBS.rotateY(RightHorn.MOVE_MATRIX, -Math.PI / 9); // point backwards
+  
+  var temp = LIBS.get_I4();
+  LIBS.translateY(temp, 9);
+  LIBS.rotateZ(temp, Math.PI / 4); // 45°
+  LIBS.rotateY(temp, Math.PI / 2); // 90°
+  // LIBS.translateY(temp, -4);
+  LeftTopWing.MOVE_MATRIX = LIBS.multiply(temp, LeftTopWing.MOVE_MATRIX);
 
-  LIBS.rotateY(LeftHorn.MOVE_MATRIX, Math.PI/9); // point backwards
-  LIBS.rotateY(RightHorn.MOVE_MATRIX, -Math.PI/9); // point backwards
+
 
   // Hieararchy
-  Body.childs.push(Head);
-  Head.childs.push(LeftRetina);
-  Head.childs.push(RightRetina);
-  LeftRetina.childs.push(LeftEye);
-  RightRetina.childs.push(RightEye);
+  // Body.childs.push(Head);
+  // Head.childs.push(LeftRetina);
+  // Head.childs.push(RightRetina);
+  // LeftRetina.childs.push(LeftEye);
+  // RightRetina.childs.push(RightEye);
 
-  Head.childs.push(LeftHorn);
-  Head.childs.push(RightHorn);
+  // Head.childs.push(LeftHorn);
+  // Head.childs.push(RightHorn);
 
-  Body.setup();
+  // Body.childs.push(LeftTopWing);
+  // Body.childs.push(LeftBottomWing);
+  // Body.childs.push(RightTopWing);
+  // Body.childs.push(RightBottomWing);
+
+  // Body.setup();
+
+  LeftTopWing.setup();
 
   var PROJMATRIX = LIBS.get_projection(
     60,
@@ -288,7 +360,7 @@ function main() {
     LIBS.set_I4(VIEWMATRIX);
     LIBS.translateZ(VIEWMATRIX, zoom);
 
-    Body.render(MODEL);
+    LeftTopWing.render(MODEL);
 
     if (!drag) {
       dX *= 1 - FRICTION;
