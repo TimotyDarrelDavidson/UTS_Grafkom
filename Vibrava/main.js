@@ -5,6 +5,7 @@ import { generateKepala } from "./kepala.js";
 import { generateMata } from "./mata.js";
 import { generateCurvedCone } from "./horn.js";
 import { generateWing } from "./wings.js";
+import { generateVibravaLeg, getLegPositions } from "./legs.js";
 
 function main() {
   var CANVAS = document.getElementById("mycanvas");
@@ -118,13 +119,21 @@ function main() {
     color: [0.26, 0.86, 0.24], // bright green
     twoSided: true,
   });
-
   var tailFinData = generateWing({
     w: 0.5,
     h: 1.0,
     z: 0,
     color: [0.26, 0.86, 0.24], // bright green
     twoSided: true,
+  });
+  var legData = generateVibravaLeg({
+    thighLength: 1.2,
+    shinLength: 1.5,
+    footLength: 0.8,
+    clawLength: 0.3,
+    color: [0.25, 0.25, 0.2],
+    clawColor: [0.15, 0.15, 0.15],
+    numClaws: 3,
   });
 
   var Body = new MyObject(
@@ -254,6 +263,63 @@ function main() {
     tailFinData.faces
   );
 
+  var legs = {};
+  const legPositions = getLegPositions();
+  [
+    "frontLeft",
+    "frontRight",
+    "backLeft",
+    "backRight",
+  ].forEach((legName) => {
+    legs[legName] = {
+      thigh: new MyObject(
+        Gl,
+        SHADER_PROGRAM,
+        _position,
+        _color,
+        _Mmatrix,
+        legData.thigh.vertices,
+        legData.thigh.faces
+      ),
+      shin: new MyObject(
+        Gl,
+        SHADER_PROGRAM,
+        _position,
+        _color,
+        _Mmatrix,
+        legData.shin.vertices,
+        legData.shin.faces
+      ),
+      foot: new MyObject(
+        Gl,
+        SHADER_PROGRAM,
+        _position,
+        _color,
+        _Mmatrix,
+        legData.foot.vertices,
+        legData.foot.faces
+      ),
+      leftToe: new MyObject(
+        Gl,
+        SHADER_PROGRAM,
+        _position,
+        _color,
+        _Mmatrix,
+        legData.leftToe.vertices,
+        legData.leftToe.faces
+      ),
+      rightToe: new MyObject(
+        Gl,
+        SHADER_PROGRAM,
+        _position,
+        _color,
+        _Mmatrix,
+        legData.rightToe.vertices,
+        legData.rightToe.faces
+      ),
+    };
+  });
+
   // Positioning
   LIBS.translateX(Head.MOVE_MATRIX, 4.8);
 
@@ -367,31 +433,19 @@ function main() {
   // Left Tail Fin
   temp = LIBS.get_I4();
   LIBS.translateY(temp, 1);
-  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
-    LeftTailFin.MOVE_MATRIX,
-    temp
-  );
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(LeftTailFin.MOVE_MATRIX, temp);
 
   temp = LIBS.get_I4();
   LIBS.rotateY(temp, Math.PI / 2); // 90°
-  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
-    LeftTailFin.MOVE_MATRIX,
-    temp
-  );
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(LeftTailFin.MOVE_MATRIX, temp);
 
   temp = LIBS.get_I4();
   LIBS.rotateZ(temp, Math.PI / 3); // 30°
-  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
-    LeftTailFin.MOVE_MATRIX,
-    temp
-  );
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(LeftTailFin.MOVE_MATRIX, temp);
 
   temp = LIBS.get_I4();
   LIBS.rotateY(temp, -Math.PI / 4); // 45°
-  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
-    LeftTailFin.MOVE_MATRIX,
-    temp
-  );
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(LeftTailFin.MOVE_MATRIX, temp);
 
   LIBS.translateX(LeftTailFin.MOVE_MATRIX, -3.3);
   LIBS.translateY(LeftTailFin.MOVE_MATRIX, 1.9);
@@ -400,35 +454,63 @@ function main() {
   // Right Tail Fin
   temp = LIBS.get_I4();
   LIBS.translateY(temp, 1);
-  RightTailFin.MOVE_MATRIX = LIBS.multiply(
-    RightTailFin.MOVE_MATRIX,
-    temp
-  );
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(RightTailFin.MOVE_MATRIX, temp);
 
   temp = LIBS.get_I4();
   LIBS.rotateY(temp, Math.PI / 2); // 90°
-  RightTailFin.MOVE_MATRIX = LIBS.multiply(
-    RightTailFin.MOVE_MATRIX,
-    temp
-  );
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(RightTailFin.MOVE_MATRIX, temp);
 
   temp = LIBS.get_I4();
   LIBS.rotateZ(temp, Math.PI / 3); // 30°
-  RightTailFin.MOVE_MATRIX = LIBS.multiply(
-    RightTailFin.MOVE_MATRIX,
-    temp
-  );
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(RightTailFin.MOVE_MATRIX, temp);
 
   temp = LIBS.get_I4();
   LIBS.rotateY(temp, Math.PI / 4); // 45°
-  RightTailFin.MOVE_MATRIX = LIBS.multiply(
-    RightTailFin.MOVE_MATRIX,
-    temp
-  );
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(RightTailFin.MOVE_MATRIX, temp);
 
   LIBS.translateX(RightTailFin.MOVE_MATRIX, -3.3);
   LIBS.translateY(RightTailFin.MOVE_MATRIX, 1.9);
   LIBS.translateZ(RightTailFin.MOVE_MATRIX, 0.1);
+
+  Object.keys(legs).forEach((legName) => {
+    const pos = legPositions[legName];
+    const leg = legs[legName];
+
+    // Position thigh at base
+    LIBS.translateX(leg.thigh.MOVE_MATRIX, pos.base.x);
+    LIBS.translateY(leg.thigh.MOVE_MATRIX, pos.base.y);
+    LIBS.translateZ(leg.thigh.MOVE_MATRIX, pos.base.z);
+
+    if (legName === "frontLeft" || legName === "backLeft") {
+      LIBS.rotateX(leg.thigh.MOVE_MATRIX, -(pos.angles.hip * Math.PI) / 180);
+    } else {
+      LIBS.rotateX(leg.thigh.MOVE_MATRIX, (pos.angles.hip * Math.PI) / 180);
+    }
+
+    // Position shin at end of thigh
+    LIBS.translateY(leg.shin.MOVE_MATRIX, -1.2); // thigh length
+    LIBS.rotateX(leg.shin.MOVE_MATRIX, (pos.angles.knee * Math.PI) / 180);
+
+    // Position foot at end of shin
+    LIBS.translateY(leg.foot.MOVE_MATRIX, -1.5); // shin length
+    LIBS.rotateZ(leg.foot.MOVE_MATRIX, (pos.angles.ankle * Math.PI) / 180);
+
+    // Position toe at end of foot
+    LIBS.translateY(leg.leftToe.MOVE_MATRIX, -0.8); // foot length
+    LIBS.translateY(leg.rightToe.MOVE_MATRIX, -0.8); // foot length
+    LIBS.rotateX(leg.leftToe.MOVE_MATRIX, (pos.angles.leftToe * Math.PI) / 180);
+    LIBS.rotateX(leg.rightToe.MOVE_MATRIX, (pos.angles.rightToe * Math.PI) / 180);
+
+    
+    // Build hierarchy: thigh -> shin -> foot -> claws
+    leg.thigh.childs.push(leg.shin);
+    leg.shin.childs.push(leg.foot);
+    leg.foot.childs.push(leg.leftToe);
+    leg.foot.childs.push(leg.rightToe);
+    
+    // Attach to body
+    Body.childs.push(leg.thigh);
+  });
 
   // Hieararchy
   Body.childs.push(Head);
