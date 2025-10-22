@@ -91,7 +91,7 @@ function main() {
   Gl.enable(Gl.BLEND);
   Gl.blendFunc(Gl.SRC_ALPHA, Gl.ONE_MINUS_SRC_ALPHA);
 
-  Gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  Gl.clearColor(1, 1, 1, 1.0);
   Gl.clearDepth(1.0);
 
   // Generate geometry
@@ -114,6 +114,14 @@ function main() {
   var wingData = generateWing({
     w: 1,
     h: 2,
+    z: 0,
+    color: [0.26, 0.86, 0.24], // bright green
+    twoSided: true,
+  });
+
+  var tailFinData = generateWing({
+    w: 0.5,
+    h: 1.0,
     z: 0,
     color: [0.26, 0.86, 0.24], // bright green
     twoSided: true,
@@ -227,6 +235,24 @@ function main() {
     wingData.vertices,
     wingData.faces
   );
+  var LeftTailFin = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    tailFinData.vertices,
+    tailFinData.faces
+  );
+  var RightTailFin = new MyObject(
+    Gl,
+    SHADER_PROGRAM,
+    _position,
+    _color,
+    _Mmatrix,
+    tailFinData.vertices,
+    tailFinData.faces
+  );
 
   // Positioning
   LIBS.translateX(Head.MOVE_MATRIX, 4.8);
@@ -235,53 +261,194 @@ function main() {
   LeftEye.alpha = 0.4;
   RightEye.alpha = 0.4;
 
-  // LIBS.rotateY(LeftTopWing.MOVE_MATRIX, Math.PI / 2); // 45°
-  // LIBS.rotateZ(LeftTopWing.MOVE_MATRIX, Math.PI / 3); // 30°
-  // LIBS.rotateY(LeftTopWing.MOVE_MATRIX, Math.PI / 6); // 45°
-  // LIBS.translateY(LeftTopWing.MOVE_MATRIX, 1.9);
-  // LIBS.translateX(LeftTopWing.MOVE_MATRIX, 1.4);
-  // LIBS.translateZ(LeftTopWing.MOVE_MATRIX, 1.4);
-
-  // LIBS.rotateY(LeftBottomWing.MOVE_MATRIX, Math.PI / 2); // 45°
-  // LIBS.rotateZ(LeftBottomWing.MOVE_MATRIX, Math.PI / 2); // 30°
-  // LIBS.rotateY(LeftBottomWing.MOVE_MATRIX, Math.PI / 6); // 45°
-  // LIBS.translateY(LeftBottomWing.MOVE_MATRIX, 1.9);
-  // LIBS.translateX(LeftBottomWing.MOVE_MATRIX, 1.4);
-  // LIBS.translateZ(LeftBottomWing.MOVE_MATRIX, 1.4);
-
   LIBS.translateZ(LeftRetina.MOVE_MATRIX, 1.4);
   LIBS.translateZ(RightRetina.MOVE_MATRIX, -1.4);
-  
+
   LIBS.rotateY(LeftHorn.MOVE_MATRIX, Math.PI / 9); // point backwards
   LIBS.rotateY(RightHorn.MOVE_MATRIX, -Math.PI / 9); // point backwards
-  
+
+  // Wings positioning
+  // Left Top Wing
   var temp = LIBS.get_I4();
-  LIBS.translateY(temp, 9);
-  LIBS.rotateZ(temp, Math.PI / 4); // 45°
+  LIBS.translateY(temp, 2);
+  LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
+
+  temp = LIBS.get_I4();
   LIBS.rotateY(temp, Math.PI / 2); // 90°
-  // LIBS.translateY(temp, -4);
-  LeftTopWing.MOVE_MATRIX = LIBS.multiply(temp, LeftTopWing.MOVE_MATRIX);
+  LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
 
+  temp = LIBS.get_I4();
+  LIBS.rotateZ(temp, Math.PI / 4); // 45°
+  LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
 
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 4); // 45°
+  LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
+
+  LIBS.translateX(LeftTopWing.MOVE_MATRIX, 3);
+  LIBS.translateY(LeftTopWing.MOVE_MATRIX, 1);
+  LIBS.translateZ(LeftTopWing.MOVE_MATRIX, 0.6);
+
+  // Left Bottom Wing
+  temp = LIBS.get_I4();
+  LIBS.translateY(temp, 2);
+  LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 2); // 90°
+  LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
+
+  temp = LIBS.get_I4();
+  LIBS.rotateZ(temp, Math.PI / 2.5); // 30°
+  LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 4); // 45°
+  LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
+
+  LIBS.translateX(LeftBottomWing.MOVE_MATRIX, 3);
+  LIBS.translateY(LeftBottomWing.MOVE_MATRIX, 1);
+  LIBS.translateZ(LeftBottomWing.MOVE_MATRIX, 0.6);
+
+  // Right Bottom Wing
+  temp = LIBS.get_I4();
+  LIBS.translateY(temp, 2);
+  RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 2); // 90°
+  RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+  temp = LIBS.get_I4();
+  LIBS.rotateZ(temp, Math.PI / 4); // 45°
+  RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, -Math.PI / 4); // 45°
+  RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+  LIBS.translateX(RightTopWing.MOVE_MATRIX, 3);
+  LIBS.translateY(RightTopWing.MOVE_MATRIX, 1);
+  LIBS.translateZ(RightTopWing.MOVE_MATRIX, -0.6);
+
+  // Right Bottom Wing
+  temp = LIBS.get_I4();
+  LIBS.translateY(temp, 2);
+  RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+    RightBottomWing.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 2); // 90°
+  RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+    RightBottomWing.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateZ(temp, Math.PI / 2.5); // 30°
+  RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+    RightBottomWing.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, -Math.PI / 4); // 45°
+  RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+    RightBottomWing.MOVE_MATRIX,
+    temp
+  );
+
+  LIBS.translateX(RightBottomWing.MOVE_MATRIX, 3);
+  LIBS.translateY(RightBottomWing.MOVE_MATRIX, 1);
+  LIBS.translateZ(RightBottomWing.MOVE_MATRIX, -0.6);
+
+  // Left Tail Fin
+  temp = LIBS.get_I4();
+  LIBS.translateY(temp, 1);
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
+    LeftTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 2); // 90°
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
+    LeftTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateZ(temp, Math.PI / 3); // 30°
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
+    LeftTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, -Math.PI / 4); // 45°
+  LeftTailFin.MOVE_MATRIX = LIBS.multiply(
+    LeftTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  LIBS.translateX(LeftTailFin.MOVE_MATRIX, -3.3);
+  LIBS.translateY(LeftTailFin.MOVE_MATRIX, 1.9);
+  LIBS.translateZ(LeftTailFin.MOVE_MATRIX, -0.1);
+
+  // Right Tail Fin
+  temp = LIBS.get_I4();
+  LIBS.translateY(temp, 1);
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(
+    RightTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 2); // 90°
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(
+    RightTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateZ(temp, Math.PI / 3); // 30°
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(
+    RightTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  temp = LIBS.get_I4();
+  LIBS.rotateY(temp, Math.PI / 4); // 45°
+  RightTailFin.MOVE_MATRIX = LIBS.multiply(
+    RightTailFin.MOVE_MATRIX,
+    temp
+  );
+
+  LIBS.translateX(RightTailFin.MOVE_MATRIX, -3.3);
+  LIBS.translateY(RightTailFin.MOVE_MATRIX, 1.9);
+  LIBS.translateZ(RightTailFin.MOVE_MATRIX, 0.1);
 
   // Hieararchy
-  // Body.childs.push(Head);
-  // Head.childs.push(LeftRetina);
-  // Head.childs.push(RightRetina);
-  // LeftRetina.childs.push(LeftEye);
-  // RightRetina.childs.push(RightEye);
+  Body.childs.push(Head);
+  Head.childs.push(LeftRetina);
+  Head.childs.push(RightRetina);
+  LeftRetina.childs.push(LeftEye);
+  RightRetina.childs.push(RightEye);
 
-  // Head.childs.push(LeftHorn);
-  // Head.childs.push(RightHorn);
+  Head.childs.push(LeftHorn);
+  Head.childs.push(RightHorn);
 
-  // Body.childs.push(LeftTopWing);
-  // Body.childs.push(LeftBottomWing);
-  // Body.childs.push(RightTopWing);
-  // Body.childs.push(RightBottomWing);
+  Body.childs.push(LeftTopWing);
+  Body.childs.push(LeftBottomWing);
+  Body.childs.push(RightTopWing);
+  Body.childs.push(RightBottomWing);
 
-  // Body.setup();
+  Body.childs.push(LeftTailFin);
+  Body.childs.push(RightTailFin);
 
-  LeftTopWing.setup();
+  Body.setup();
 
   var PROJMATRIX = LIBS.get_projection(
     60,
@@ -347,6 +514,10 @@ function main() {
   CANVAS.addEventListener("mousemove", mouseMove, false);
   CANVAS.addEventListener("wheel", mouseWheel, false);
 
+  var wingFlapSpeed = 25.0;
+  var wingFlapAmount = Math.PI / 6; // 30 degrees
+  var time = 0;
+
   var animate = function () {
     Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
     Gl.clear(Gl.COLOR_BUFFER_BIT | Gl.DEPTH_BUFFER_BIT);
@@ -354,13 +525,128 @@ function main() {
     Gl.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
     Gl.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
 
+    time += 0.016; // approximately 60fps
+    var wingAngle = Math.sin(time * wingFlapSpeed) * wingFlapAmount;
+
     var MODEL = LIBS.get_I4();
     LIBS.rotateY(MODEL, THETA);
     LIBS.rotateX(MODEL, PHI);
     LIBS.set_I4(VIEWMATRIX);
     LIBS.translateZ(VIEWMATRIX, zoom);
 
-    LeftTopWing.render(MODEL);
+    // Animate Left Top Wing
+    LIBS.set_I4(LeftTopWing.MOVE_MATRIX);
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, 2);
+    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, Math.PI / 2);
+    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateZ(temp, Math.PI / 4 + wingAngle); // Add animation here
+    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, Math.PI / 4);
+    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
+
+    LIBS.translateX(LeftTopWing.MOVE_MATRIX, 3);
+    LIBS.translateY(LeftTopWing.MOVE_MATRIX, 1);
+    LIBS.translateZ(LeftTopWing.MOVE_MATRIX, 0.6);
+
+    // Animate Left Bottom Wing
+    LIBS.set_I4(LeftBottomWing.MOVE_MATRIX);
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, 2);
+    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(
+      LeftBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, Math.PI / 2);
+    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(
+      LeftBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    temp = LIBS.get_I4();
+    LIBS.rotateZ(temp, Math.PI / 2.5 + wingAngle * 0.8); // Slightly different phase
+    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(
+      LeftBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, Math.PI / 4);
+    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(
+      LeftBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    LIBS.translateX(LeftBottomWing.MOVE_MATRIX, 3);
+    LIBS.translateY(LeftBottomWing.MOVE_MATRIX, 1);
+    LIBS.translateZ(LeftBottomWing.MOVE_MATRIX, 0.6);
+
+    // Animate Right Top Wing
+    LIBS.set_I4(RightTopWing.MOVE_MATRIX);
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, 2);
+    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, Math.PI / 2);
+    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateZ(temp, Math.PI / 4 + wingAngle); // Mirror the left wing
+    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, -Math.PI / 4);
+    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
+
+    LIBS.translateX(RightTopWing.MOVE_MATRIX, 3);
+    LIBS.translateY(RightTopWing.MOVE_MATRIX, 1);
+    LIBS.translateZ(RightTopWing.MOVE_MATRIX, -0.6);
+
+    // Animate Right Bottom Wing
+    LIBS.set_I4(RightBottomWing.MOVE_MATRIX);
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, 2);
+    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+      RightBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, Math.PI / 2);
+    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+      RightBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    temp = LIBS.get_I4();
+    LIBS.rotateZ(temp, Math.PI / 2.5 + wingAngle * 0.8); // Slightly different phase
+    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+      RightBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, -Math.PI / 4);
+    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
+      RightBottomWing.MOVE_MATRIX,
+      temp
+    );
+
+    LIBS.translateX(RightBottomWing.MOVE_MATRIX, 3);
+    LIBS.translateY(RightBottomWing.MOVE_MATRIX, 1);
+    LIBS.translateZ(RightBottomWing.MOVE_MATRIX, -0.6);
+
+    Body.render(MODEL);
 
     if (!drag) {
       dX *= 1 - FRICTION;
