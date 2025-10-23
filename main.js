@@ -406,7 +406,6 @@ function main() {
     LIBS.scaleY(Trapinch.root.MOVE_MATRIX, 0.5);
     LIBS.scaleZ(Trapinch.root.MOVE_MATRIX, 0.5);
 
-    LIBS.set_I4(Vibrava.root.MOVE_MATRIX);
     LIBS.translateX(Vibrava.root.MOVE_MATRIX, 6.0);
     LIBS.rotateY(Vibrava.root.MOVE_MATRIX, (-90 * Math.PI) / 180);
     LIBS.rotateX(Vibrava.root.MOVE_MATRIX, (-35 * Math.PI) / 180);
@@ -501,19 +500,19 @@ function main() {
 
   // Camera presets (tweak to taste)
   const CAM = {
-  // look at Trapinch on the head
-  trapinch: { zoom:  4, THETA: 0.0, PHI: -0.2, tx: 0.0,  ty: 4.0, tz: -0.2 },
+    // look at Trapinch on the head
+    trapinch: { zoom:  4, THETA: 0.8, PHI: -0.8, tx: -1.9,  ty: 3.2, tz: 0.0 },
 
-  // look at Vibrava on the back (behind neck)
-  vibrava:  { zoom:  5, THETA: 0.0, PHI: -0.1, tx: 0.0, ty: 0.0, tz: -6.0 },
+    // look at Vibrava on the back (behind neck)
+    vibrava:  { zoom:  9, THETA: 0.0, PHI: 0.0, tx: 0.0, ty: 0.6, tz: 0.0 },
 
-  // wide hero: look at Flygon’s torso
-  flygon:   { zoom: 15, THETA: 0.0,  PHI: 0.0,  tx: 0.0,  ty: 0.0, tz: 0.0 },
-};
+    // wide hero: look at Flygon’s torso
+    flygon:   { zoom: 9, THETA: 0.8,  PHI: 0.0,  tx: 0.0,  ty: 2.0, tz: 0.0 },
+  };
 
-btnFlygon.onclick   = () => tweenCamera(CAM.flygon);
-btnTrapinch.onclick = () => tweenCamera(CAM.trapinch);
-btnVibrava.onclick  = () => tweenCamera(CAM.vibrava);
+  btnFlygon.onclick   = () => tweenCamera(CAM.flygon);
+  btnTrapinch.onclick = () => tweenCamera(CAM.trapinch);
+  btnVibrava.onclick  = () => tweenCamera(CAM.vibrava);
 
   requestAnimationFrame(animate);
 }
