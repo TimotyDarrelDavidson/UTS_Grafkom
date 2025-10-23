@@ -369,6 +369,8 @@ function main() {
   CANVAS.addEventListener("wheel", onWheel, { passive: false });
   CANVAS.addEventListener("contextmenu", (e) => e.preventDefault(), false); // Disable context menu
 
+  // camera target we look at (world space)
+  let camTarget = { x: 0, y: 0, z: 0 };
   // ─── Draw loop ───
   const animate = (tMs) => {
     const t = tMs * 0.001; // seconds
@@ -378,8 +380,12 @@ function main() {
 
     // Build view matrix with zoom and pan
     VIEWMATRIX = LIBS.get_I4();
-    LIBS.translateZ(VIEWMATRIX, -zoom);
-    LIBS.rotateY(VIEWMATRIX, camPanX);
+    LIBS.translateZ(VIEWMATRIX, -zoom);        // distance from target
+    LIBS.rotateY(VIEWMATRIX, camPanX);         // orbit yaw
+    // finally, move the world so target is at the origin
+    LIBS.translateX(VIEWMATRIX, -camTarget.x);
+    LIBS.translateY(VIEWMATRIX, -camTarget.y);
+    LIBS.translateZ(VIEWMATRIX, -camTarget.z);
 
     Gl.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
     Gl.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
@@ -404,9 +410,9 @@ function main() {
     LIBS.translateX(Vibrava.root.MOVE_MATRIX, 6.0);
     LIBS.rotateY(Vibrava.root.MOVE_MATRIX, (-90 * Math.PI) / 180);
     LIBS.rotateX(Vibrava.root.MOVE_MATRIX, (-35 * Math.PI) / 180);
-    LIBS.scaleX(Vibrava.root.MOVE_MATRIX, 0.30);
-    LIBS.scaleY(Vibrava.root.MOVE_MATRIX, 0.30);
-    LIBS.scaleZ(Vibrava.root.MOVE_MATRIX, 0.30);
+    LIBS.scaleX(Vibrava.root.MOVE_MATRIX, 0.3);
+    LIBS.scaleY(Vibrava.root.MOVE_MATRIX, 0.3);
+    LIBS.scaleZ(Vibrava.root.MOVE_MATRIX, 0.3);
 
     // Render entire hierarchy (Flygon renders Trapinch automatically)
     Flygon.root.render(LIBS.get_I4());
@@ -443,6 +449,72 @@ function main() {
     Gl.flush();
     requestAnimationFrame(animate);
   };
+
+  // === UI: camera buttons ===
+  const ui = document.createElement("div");
+  ui.style.position = "fixed";
+  ui.style.top = "16px";
+  ui.style.left = "16px";
+  ui.style.display = "flex";
+  ui.style.gap = "8px";
+  ui.style.zIndex = "9999";
+
+  function makeBtn(label) {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.style.padding = "8px 12px";
+    b.style.border = "none";
+    b.style.borderRadius = "8px";
+    b.style.background = "rgba(0,0,0,0.6)";
+    b.style.color = "white";
+    b.style.cursor = "pointer";
+    b.style.font = "600 13px system-ui, sans-serif";
+    b.onmouseenter = () => (b.style.background = "rgba(0,0,0,0.75)");
+    b.onmouseleave = () => (b.style.background = "rgba(0,0,0,0.6)");
+    return b;
+  }
+
+  const btnFlygon = makeBtn("Flygon");
+  const btnTrapinch = makeBtn("Trapinch");
+  const btnVibrava = makeBtn("Vibrava");
+  ui.append(btnFlygon, btnTrapinch, btnVibrava);
+  document.body.appendChild(ui);
+
+  // Smooth camera tween
+  function tweenCamera(to, ms = 550) {
+  const from = { zoom, THETA, PHI, camPanX: 0, 
+                 tx: camTarget.x, ty: camTarget.y, tz: camTarget.z };
+  const t0 = performance.now();
+  function step(tNow) {
+    const k = Math.min(1, (tNow - t0) / ms);
+    const e = k * k * (3 - 2 * k);
+    zoom  = from.zoom  + (to.zoom  - from.zoom)  * e;
+    THETA = from.THETA + (to.THETA - from.THETA) * e;
+    PHI   = from.PHI   + (to.PHI   - from.PHI)   * e;
+    camTarget.x = from.tx + (to.tx - from.tx) * e;
+    camTarget.y = from.ty + (to.ty - from.ty) * e;
+    camTarget.z = from.tz + (to.tz - from.tz) * e;
+    if (k < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+  // Camera presets (tweak to taste)
+  const CAM = {
+  // wide hero: look at Flygon’s torso
+  flygon:   { zoom: 15, THETA: 0.0,  PHI: 0.0,  tx: 0.0,  ty: 0.0, tz: 0.0 },
+
+  // look at Trapinch on the head
+  trapinch: { zoom:  3, THETA: 0.05, PHI:-0.30, tx: -5.0,  ty: 3.9, tz: 0.0 },
+
+  // look at Vibrava on the back (behind neck)
+  vibrava:  { zoom: 10, THETA:-0.12, PHI:-0.15, tx:-0.1, ty: 2.0, tz:-0.4 },
+};
+
+btnFlygon.onclick   = () => tweenCamera(CAM.flygon);
+btnTrapinch.onclick = () => tweenCamera(CAM.trapinch);
+btnVibrava.onclick  = () => tweenCamera(CAM.vibrava);
+
   requestAnimationFrame(animate);
 }
 
