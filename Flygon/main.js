@@ -45,7 +45,7 @@ function main() {
   var shader_fragment_source = `
     precision mediump float;
     varying vec3 vColor;
-    uniform float uAlpha;     // NEW: per-object opacity
+    uniform float uAlpha;     // per-object opacity (dipakai di MyObject)
     void main(void) {
       gl_FragColor = vec4(vColor, uAlpha);
     }
@@ -101,37 +101,41 @@ function main() {
   var FlygonBody = generateFlygonBodyBezier(p0, p1, p2, p3, 1.0, 1.0, 96, 64);
   var FlygonBelly = generateFlygonBelly(0.8, 0.5, 1, 40, 40);
   var FlygonHead = generateFlygonHead(0.5, 0.4, 0.7, 40, 40);
-  var FlygonHornCurved = generateCurvedHorn_flat(0.15, 0.02, 1,8, 22, 18);
+  var FlygonHornCurved = generateCurvedHorn_flat(0.15, 0.02, 1, 8, 22, 18);
   var FlygonThigh = generateFlygonThigh(0.4, 0.6, 0.7, 40, 40, false);
   var FlygonInnerThigh = generateFlygonThigh(0.4, 0.7, 0.5, 40, 40, true);
   var FlygonFeetGeo = generateFlygonFeet(0.2, 0.2, 1, 20, 20);
   var FlygonTail = generateFlygonTailBezier(
     [0, 0, 0],
     [0, -3, -5],
-    [-1, -4, 2],
-    [0, -4, 2],
+    [-1, -3, 2],
+    [-1, -4, 3],
     0.8,
     0.8,
     60,
     20
   );
-  var FlygonTailFins = generateFlygonTailFins(1, {
-    centerColor: [0.5, 1.0, 0.5],
-    midColor: [0.2, 0.7, 0.2],
-    edgeColor: [1.0, 0.05, 0.05],
-    borderWidth: 0.22,
+  var FlygonTailFins = generateFlygonTailFins(1.2, {
+    centerColor: [0.6, 1.0, 0.6],
+    midColor: [0.4, 0.9, 0.4],
+    edgeColor: [0.8, 0.2, 0.2],
+    borderWidth: 0.5,
+    spreadDeg: 50,
+    sideSeparation: 0.9,
     twoSided: true,
-    spreadDeg: 50, // a bit wider fan
-    sideSeparation: 0.5, // NEW: pushes the side fins apart
-    stackZGap: 0.001, // NEW: puts them on separate tiny z layers
   });
-  var FlygonWing = generateFlygonWing(2.3);
+
+  var FlygonWing = generateFlygonWing(2.3, {
+    redScale: 1.2, // makes the red membrane wider
+    borderWidth: 0.2, // optional, still controls base shape
+    twoSided: true,
+  });
 
   // Arms (short, tapered)
   var LUpperArmGeo = generateArmSegment(0.14, 0.11, 0.1, 0.08, 0.52, 24, 20);
   var LForeArmGeo = generateArmSegment(0.12, 0.09, 0.085, 0.07, 0.45, 24, 20);
   var LHandGeo = generateHandEllipsoid(0.09, 0.07, 0.085);
-  var ClawGeo = generateClaw(0.22, 0.038); // shorter & slimmer claws
+  var ClawGeo = generateClaw(0.22, 0.038);
   var RUpperArmGeo = LUpperArmGeo,
     RForeArmGeo = LForeArmGeo,
     RHandGeo = LHandGeo;
@@ -473,53 +477,45 @@ function main() {
   LIBS.rotateX(rightFeet.MOVE_MATRIX, (20 * Math.PI) / 180);
 
   // Wings (children of Head → appear near shoulders)
-  LIBS.translateY(leftWing.MOVE_MATRIX, 1.0);
-  LIBS.translateZ(leftWing.MOVE_MATRIX, -1.7);
-  LIBS.translateX(leftWing.MOVE_MATRIX, -3.0);
-  LIBS.rotateX(leftWing.MOVE_MATRIX, (-20 * Math.PI) / 180);
-  LIBS.rotateZ(leftWing.MOVE_MATRIX, (50 * Math.PI) / 180);
-
-  LIBS.translateY(rightWing.MOVE_MATRIX, 1.0);
-  LIBS.translateZ(rightWing.MOVE_MATRIX, -1.7);
-  LIBS.translateX(rightWing.MOVE_MATRIX, 3.0);
-  LIBS.rotateX(rightWing.MOVE_MATRIX, (-20 * Math.PI) / 180);
-  LIBS.rotateZ(rightWing.MOVE_MATRIX, (-50 * Math.PI) / 180);
+  // Wing parameters
+  const wingSize = 2.3;
+  const pivotY = wingSize * 2 * 1.2; // bottom point is at -size*2
 
   // ─────────────── Arms (natural forward/down pose) ───────────────
   // --- LEFT ARM (natural: sedikit turun & maju) ---
   LIBS.set_I4(LUpperArm.MOVE_MATRIX);
-  LIBS.translateX(LUpperArm.MOVE_MATRIX, -0.27); // closer to torso
+  LIBS.translateX(LUpperArm.MOVE_MATRIX, -0.27);
   LIBS.translateY(LUpperArm.MOVE_MATRIX, 1.62);
   LIBS.translateZ(LUpperArm.MOVE_MATRIX, 0.6);
-  LIBS.rotateZ(LUpperArm.MOVE_MATRIX, (20 * Math.PI) / 180); // open outward a bit
-  LIBS.rotateX(LUpperArm.MOVE_MATRIX, (120 * Math.PI) / 180); // tilt downward
-  LIBS.rotateY(LUpperArm.MOVE_MATRIX, (-3 * Math.PI) / 180); // slight forward twist
+  LIBS.rotateZ(LUpperArm.MOVE_MATRIX, (20 * Math.PI) / 180);
+  LIBS.rotateX(LUpperArm.MOVE_MATRIX, (120 * Math.PI) / 180);
+  LIBS.rotateY(LUpperArm.MOVE_MATRIX, (-3 * Math.PI) / 180);
 
   LIBS.set_I4(LForeArm.MOVE_MATRIX);
-  LIBS.translateY(LForeArm.MOVE_MATRIX, 0.5); // attach at end of upper arm (+Y)
+  LIBS.translateY(LForeArm.MOVE_MATRIX, 0.5);
   LIBS.rotateX(LForeArm.MOVE_MATRIX, (-100 * Math.PI) / 180);
 
   LIBS.set_I4(LHand.MOVE_MATRIX);
   LIBS.translateY(LHand.MOVE_MATRIX, 0.5);
 
-  // claws kiri (sebar dikit di sumbu Z, arahkan keluar)
-  LIBS.set_I4(LClaw1.MOVE_MATRIX); // center
+  // claws kiri
+  LIBS.set_I4(LClaw1.MOVE_MATRIX);
   LIBS.rotateX(LClaw1.MOVE_MATRIX, Math.PI / 2);
   LIBS.translateZ(LClaw1.MOVE_MATRIX, 0.13);
 
-  LIBS.set_I4(LClaw2.MOVE_MATRIX); // left side (fan out)
+  LIBS.set_I4(LClaw2.MOVE_MATRIX);
   LIBS.rotateX(LClaw2.MOVE_MATRIX, Math.PI / 2);
   LIBS.rotateY(LClaw2.MOVE_MATRIX, (18 * Math.PI) / 180);
   LIBS.translateX(LClaw2.MOVE_MATRIX, 0.05);
   LIBS.translateZ(LClaw2.MOVE_MATRIX, 0.12);
 
-  LIBS.set_I4(LClaw3.MOVE_MATRIX); // right side (fan out)
+  LIBS.set_I4(LClaw3.MOVE_MATRIX);
   LIBS.rotateX(LClaw3.MOVE_MATRIX, Math.PI / 2);
   LIBS.rotateY(LClaw3.MOVE_MATRIX, (-18 * Math.PI) / 180);
   LIBS.translateX(LClaw3.MOVE_MATRIX, -0.05);
   LIBS.translateZ(LClaw3.MOVE_MATRIX, 0.12);
 
-  // --- RIGHT ARM (mirror di X; rotasi Z & Y dibalik tandanya) ---
+  // --- RIGHT ARM (mirror) ---
   LIBS.set_I4(RUpperArm.MOVE_MATRIX);
   LIBS.translateX(RUpperArm.MOVE_MATRIX, 0.27);
   LIBS.translateY(RUpperArm.MOVE_MATRIX, 1.62);
@@ -536,35 +532,33 @@ function main() {
   LIBS.translateY(RHand.MOVE_MATRIX, 0.5);
 
   // claws kanan
-  LIBS.set_I4(RClaw1.MOVE_MATRIX); // center
+  LIBS.set_I4(RClaw1.MOVE_MATRIX);
   LIBS.rotateX(RClaw1.MOVE_MATRIX, Math.PI / 2);
   LIBS.translateZ(RClaw1.MOVE_MATRIX, 0.13);
 
-  LIBS.set_I4(RClaw2.MOVE_MATRIX); // right side (mirror)
+  LIBS.set_I4(RClaw2.MOVE_MATRIX);
   LIBS.rotateX(RClaw2.MOVE_MATRIX, Math.PI / 2);
   LIBS.rotateY(RClaw2.MOVE_MATRIX, (-18 * Math.PI) / 180);
   LIBS.translateX(RClaw2.MOVE_MATRIX, -0.05);
   LIBS.translateZ(RClaw2.MOVE_MATRIX, 0.12);
 
-  LIBS.set_I4(RClaw3.MOVE_MATRIX); // left side (mirror)
+  LIBS.set_I4(RClaw3.MOVE_MATRIX);
   LIBS.rotateX(RClaw3.MOVE_MATRIX, Math.PI / 2);
   LIBS.rotateY(RClaw3.MOVE_MATRIX, (18 * Math.PI) / 180);
   LIBS.translateX(RClaw3.MOVE_MATRIX, 0.05);
   LIBS.translateZ(RClaw3.MOVE_MATRIX, 0.12);
 
   // Eyes (child of Head)
-  LEyes.alpha = 0.6; // set transparency
+  LEyes.alpha = 0.6; // semi-transparan
   LIBS.translateX(LPupils.MOVE_MATRIX, -0.4);
   LIBS.translateZ(LPupils.MOVE_MATRIX, 0.38);
   LIBS.rotateY(LPupils.MOVE_MATRIX, (20 * Math.PI) / 180);
-
   LIBS.translateZ(LEyes.MOVE_MATRIX, -0.1);
 
-  REyes.alpha = 0.6; // set transparency
+  REyes.alpha = 0.6;
   LIBS.translateX(RPupils.MOVE_MATRIX, 0.4);
   LIBS.translateZ(RPupils.MOVE_MATRIX, 0.38);
   LIBS.rotateY(RPupils.MOVE_MATRIX, (-20 * Math.PI) / 180);
-
   LIBS.translateZ(REyes.MOVE_MATRIX, -0.1);
 
   // ─────────────── Hierarchy ───────────────
@@ -604,7 +598,6 @@ function main() {
   // Eyes (child of Head)
   Head.childs.push(LPupils);
   Head.childs.push(RPupils);
-
   LPupils.childs.push(LEyes);
   RPupils.childs.push(REyes);
 
@@ -618,10 +611,17 @@ function main() {
     1,
     100
   );
-  var VIEWMATRIX = LIBS.get_I4();
-  LIBS.translateZ(VIEWMATRIX, -10);
-  LIBS.rotateY(Flygon.MOVE_MATRIX, -Math.PI);
 
+  // ZOOM STATE
+  let camDist = 10; // jarak kamera awal
+  const MIN_DIST = 3; // batas dekat
+  const MAX_DIST = 30; // batas jauh
+  const ZOOM_SENS = 0.0025; // sensitivitas (kecil = halus)
+
+  // VIEWMATRIX akan dibangun ulang setiap frame dari camDist
+  var VIEWMATRIX = LIBS.get_I4();
+
+  // Mouse orbit state (punya kamu)
   let THETA = 0,
     PHI = 0;
   let drag = false,
@@ -631,6 +631,7 @@ function main() {
     dY = 0;
   var FRICTION = 0.05;
 
+  // Mouse listeners
   var mouseDown = (e) => {
     drag = true;
     x_prev = e.pageX;
@@ -655,8 +656,16 @@ function main() {
   CANVAS.addEventListener("mouseout", mouseUp, false);
   CANVAS.addEventListener("mousemove", mouseMove, false);
 
-  // --- Tail fins: auto-place to tail tip & orient to tail direction ---
+  // --- Zoom dengan scroll wheel ---
+  const onWheel = (e) => {
+    e.preventDefault(); // cegah halaman ikut scroll
+    camDist += e.deltaY * Math.max(0.5, camDist) * ZOOM_SENS; // proporsional
+    if (camDist < MIN_DIST) camDist = MIN_DIST;
+    if (camDist > MAX_DIST) camDist = MAX_DIST;
+  };
+  CANVAS.addEventListener("wheel", onWheel, { passive: false });
 
+  // --- Tail fins: auto-place to tail tip & orient to tail direction ---
   function getTipBaseFromVertices(vtx) {
     // vertices are [x,y,z,r,g,b,...]
     let minY = Infinity,
@@ -668,7 +677,6 @@ function main() {
       const x = vtx[i + 0],
         y = vtx[i + 1],
         z = vtx[i + 2];
-
       if (y < minY) {
         minY = y;
         tip = [x, y, z];
@@ -680,7 +688,6 @@ function main() {
     }
     return { tip, base };
   }
-
   const { tip, base } = getTipBaseFromVertices(FlygonTail.vertices);
 
   // direction from base->tip (tail axis)
@@ -692,31 +699,41 @@ function main() {
   dy /= len;
   dz /= len;
 
-  // We want the fins' plane normal (starts at +Z for our fins geometry) to align with tail axis.
-  // Convert direction vector to yaw/pitch that rotates +Z to (dx,dy,dz).
-  const yaw = Math.atan2(dx, dz); // rotate around Y to line up XZ
-  const pitch = -Math.atan2(dy, Math.hypot(dx, dz)); // then pitch around X to add Y
+  // Rotate +Z ke (dx,dy,dz)
+  const yaw = Math.atan2(dx, dz);
+  const pitch = -Math.atan2(dy, Math.hypot(dx, dz));
 
-  // tiny push past the tip so the red rim doesn't clip into the tail
-  const push = 0.04; // tweak if needed
+  // push sedikit biar gak clip
+  const push = 0.04;
   const px = tip[0] + dx * push;
   const py = tip[1] + dy * push;
   const pz = tip[2] + dz * push;
 
-  // ─────────────── Draw loop ───────────────
+  // ─────────────── GL State ───────────────
   Gl.enable(Gl.DEPTH_TEST);
   Gl.depthFunc(Gl.LEQUAL);
   Gl.clearColor(0.98, 0.94, 0.72, 1.0);
   Gl.clearDepth(1.0);
 
-  let autoRotate = 0;
+  // Resize handler → update canvas & projection
+  function onResize() {
+    CANVAS.width = window.innerWidth;
+    CANVAS.height = window.innerHeight;
+    Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
+    PROJMATRIX = LIBS.get_projection(60, CANVAS.width / CANVAS.height, 1, 100);
+  }
+  window.addEventListener("resize", onResize);
+
+  let t = 0;
   var animate = function () {
     Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
     Gl.clear(Gl.COLOR_BUFFER_BIT | Gl.DEPTH_BUFFER_BIT);
 
-    Flygon.MOVE_MATRIX = LIBS.get_I4();
-    LIBS.rotateX(Flygon.MOVE_MATRIX, (20 * Math.PI) / 180);
+    VIEWMATRIX = LIBS.get_I4();
+    LIBS.translateZ(VIEWMATRIX, -camDist);
 
+    Flygon.MOVE_MATRIX = LIBS.get_I4();
+    LIBS.rotateX(Flygon.MOVE_MATRIX, (40 * Math.PI) / 180);
     let temp = LIBS.get_I4();
     LIBS.rotateY(temp, THETA);
     Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
@@ -724,30 +741,85 @@ function main() {
     temp = LIBS.get_I4();
     LIBS.rotateX(temp, PHI);
     Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
-
     LIBS.translateZ(temp, -0.6);
     Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
 
-    // Reset and place fins in tail-local space
-    LIBS.set_I4(tailFins.MOVE_MATRIX);
-    LIBS.translateX(tailFins.MOVE_MATRIX, px);
-    LIBS.translateY(tailFins.MOVE_MATRIX, py);
-    LIBS.translateZ(tailFins.MOVE_MATRIX, pz + 0.5);
+    // ─────────────── Idle Animation ───────────────
+    t += 0.03;
 
-    // Orient the fins so their normal follows the tail axis
-    LIBS.rotateY(tailFins.MOVE_MATRIX, yaw);
-    LIBS.rotateX(tailFins.MOVE_MATRIX, pitch);
+    const wingFlap = Math.sin(t * 5) * (10 * Math.PI / 180); // ±10°
+    const tailWave = Math.sin(t * 0.6) * (8 * Math.PI / 180);
+    const bodyBob = Math.sin(t * 0.5) * 0.1;
 
-    // after: rotateY(...yaw); rotateX(...pitch);
-    LIBS.rotateY(tailFins.MOVE_MATRIX, Math.PI); // turn to face the other way
-
-    autoRotate += 0.02;
-    if (autoRotate > Math.PI * 2) autoRotate -= Math.PI * 2;
+    // Wings flap
+    LIBS.set_I4(leftWing.MOVE_MATRIX);
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, pivotY);
+    leftWing.MOVE_MATRIX = LIBS.multiply(leftWing.MOVE_MATRIX, temp);
 
     temp = LIBS.get_I4();
-    LIBS.translateZ(temp, 0.6);
-    Flygon.MOVE_MATRIX = LIBS.multiply(Flygon.MOVE_MATRIX, temp);
+    LIBS.rotateZ(temp, (40 * Math.PI) / 180);
+    leftWing.MOVE_MATRIX = LIBS.multiply(leftWing.MOVE_MATRIX, temp);
 
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, (-30 * Math.PI) / 180 + wingFlap);
+    leftWing.MOVE_MATRIX = LIBS.multiply(leftWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.translateZ(temp, -0.3);
+    leftWing.MOVE_MATRIX = LIBS.multiply(leftWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, -2);
+    leftWing.MOVE_MATRIX = LIBS.multiply(leftWing.MOVE_MATRIX, temp);
+
+
+
+    LIBS.set_I4(rightWing.MOVE_MATRIX);
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, pivotY);
+    rightWing.MOVE_MATRIX = LIBS.multiply(rightWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateZ(temp, -(40 * Math.PI) / 180);
+    rightWing.MOVE_MATRIX = LIBS.multiply(rightWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.rotateY(temp, (30 * Math.PI) / 180 - wingFlap);
+    rightWing.MOVE_MATRIX = LIBS.multiply(rightWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.translateZ(temp, -0.3);
+    rightWing.MOVE_MATRIX = LIBS.multiply(rightWing.MOVE_MATRIX, temp);
+
+    temp = LIBS.get_I4();
+    LIBS.translateY(temp, -2);
+    rightWing.MOVE_MATRIX = LIBS.multiply(rightWing.MOVE_MATRIX, temp);
+
+    // Tail wave
+    LIBS.set_I4(tail.MOVE_MATRIX);
+    LIBS.rotateX(tail.MOVE_MATRIX, tailWave);
+    // LIBS.translateY(tail.MOVE_MATRIX, bodyBob);
+
+    // Tail fins follow tail
+    LIBS.set_I4(tailFins.MOVE_MATRIX);
+    LIBS.translateX(tailFins.MOVE_MATRIX, px);
+    LIBS.translateY(tailFins.MOVE_MATRIX, py - 0.3);
+    LIBS.translateZ(tailFins.MOVE_MATRIX, pz + 0.5);
+    LIBS.rotateY(tailFins.MOVE_MATRIX, yaw);
+    LIBS.rotateX(tailFins.MOVE_MATRIX, pitch + tailWave * 0.5);
+    LIBS.rotateY(tailFins.MOVE_MATRIX, Math.PI);
+
+    // Body bobbing (breathing)
+    LIBS.set_I4(Belly.MOVE_MATRIX);
+    LIBS.translateY(Belly.MOVE_MATRIX, 0.1 + bodyBob);
+
+    // Head follows body slightly
+    LIBS.set_I4(Head.MOVE_MATRIX);
+    LIBS.translateY(Head.MOVE_MATRIX, 3.4 + bodyBob * 1.2);
+    LIBS.rotateX(Head.MOVE_MATRIX, (-10 * Math.PI) / 180 + bodyBob * 0.1);
+
+    // ─────────────── Render ───────────────
     if (!drag) {
       dX *= 1 - FRICTION;
       dY *= 1 - FRICTION;
@@ -758,11 +830,14 @@ function main() {
     Gl.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
     Gl.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
     Flygon.render(LIBS.get_I4());
-
     Gl.flush();
+
     requestAnimationFrame(animate);
   };
-  animate(0);
+
+  onResize();
+  requestAnimationFrame(animate);
 }
+
 
 window.addEventListener("load", main);

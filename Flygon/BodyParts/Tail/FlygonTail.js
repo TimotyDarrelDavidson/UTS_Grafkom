@@ -39,7 +39,7 @@ export function generateFlygonTailBezier(p0, p1, p2, p3, a, b, stacks, slices) {
 
     // radius profile (fat base → thin tip)
     function radiusProfile(t) {
-        return 1 - 0.9 * t;
+        return 0.9 - 0.8 * t;
     }
 
     // starting frame
