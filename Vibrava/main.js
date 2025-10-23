@@ -288,15 +288,6 @@ function main() {
                 legData.shin.vertices,
                 legData.shin.faces
             ),
-            foot: new MyObject(
-                Gl,
-                SHADER_PROGRAM,
-                _position,
-                _color,
-                _Mmatrix,
-                legData.foot.vertices,
-                legData.foot.faces
-            ),
             leftToe: new MyObject(
                 Gl,
                 SHADER_PROGRAM,
@@ -489,24 +480,18 @@ function main() {
         LIBS.translateY(leg.shin.MOVE_MATRIX, -1.2); // thigh length
         LIBS.rotateX(leg.shin.MOVE_MATRIX, (pos.angles.knee * Math.PI) / 180);
 
-        // Position foot at end of shin
-        LIBS.translateY(leg.foot.MOVE_MATRIX, -1.5); // shin length
-        LIBS.rotateZ(leg.foot.MOVE_MATRIX, (pos.angles.ankle * Math.PI) / 180);
 
         // Position toe at end of foot
-        LIBS.translateY(leg.leftToe.MOVE_MATRIX, -0.8); // foot length
-        LIBS.translateZ(leg.leftToe.MOVE_MATRIX, 0.15); // spread left
+        // Position toe at end of foot - SPREAD FIRST!
+        LIBS.translateY(leg.leftToe.MOVE_MATRIX, -1.5); // foot length
         LIBS.rotateX(leg.leftToe.MOVE_MATRIX, (pos.angles.leftToe * Math.PI) / 180);
 
-        LIBS.translateY(leg.rightToe.MOVE_MATRIX, -0.8); // foot length
-        LIBS.translateZ(leg.rightToe.MOVE_MATRIX, -0.15); // spread right
+        LIBS.translateY(leg.rightToe.MOVE_MATRIX, -1.5); // foot length
         LIBS.rotateX(leg.rightToe.MOVE_MATRIX, (pos.angles.rightToe * Math.PI) / 180);
-
         // Build hierarchy: thigh -> shin -> foot -> claws
         leg.thigh.childs.push(leg.shin);
-        leg.shin.childs.push(leg.foot);
-        leg.foot.childs.push(leg.leftToe);
-        leg.foot.childs.push(leg.rightToe);
+        leg.shin.childs.push(leg.leftToe);
+        leg.shin.childs.push(leg.rightToe);
 
         // Attach to body
         Body.childs.push(leg.thigh);
@@ -531,6 +516,15 @@ function main() {
     Body.childs.push(RightTailFin);
 
     Body.setup();
+
+    Object.keys(legs).forEach(ln => {
+        legs[ln].leftToe.alpha = 1.0;
+        legs[ln].rightToe.alpha = 1.0;
+    });
+
+    // 2) Disable face culling (see if they appear)
+    Gl.disable(Gl.CULL_FACE);
+
 
     var PROJMATRIX = LIBS.get_projection(
         60,

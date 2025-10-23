@@ -57,11 +57,10 @@ function generateLegSegment(length, radiusTop, radiusBottom, segments = 8, color
 export function generateVibravaLeg(config = {}) {
   const {
     thighLength = 1.2,
-    thighRadius = 0.3,
+    thighRadius = 0.2,
     shinLength = 1.5,
-    shinRadius = 0.1,
-    footLength = 0.8,
-    footRadius = 0.08,
+    shinRadius = 0.2,
+    toeRadius = 0.14,
     toeLength = 1,
     color = [0.25, 0.25, 0.2],
   } = config;
@@ -69,14 +68,12 @@ export function generateVibravaLeg(config = {}) {
   // Generate segments
   const thigh = generateLegSegment(thighLength, thighRadius, thighRadius * 0.8, 8, color);
   const shin = generateLegSegment(shinLength, shinRadius, shinRadius * 0.7, 8, color);
-  const foot = generateLegSegment(footLength, footRadius, footRadius * 0.5, 6, color);
-  const leftToe = generateLegSegment(toeLength, footRadius * 0.4, footRadius * 0.2, 6, color);
-  const rightToe = generateLegSegment(toeLength, footRadius * 0.4, footRadius * 0.2, 6, color);
+  const leftToe = generateLegSegment(toeLength, shinRadius, toeRadius, 6, color);
+  const rightToe = generateLegSegment(toeLength, shinRadius, toeRadius, 10, color);
 
   return {
     thigh,
     shin,
-    foot,
     leftToe,
     rightToe
   };
@@ -87,19 +84,19 @@ export function getLegPositions() {
   return {
     frontLeft: {
       base: { x: 2.5, y: -0.3, z: 0.6 },
-      angles: { hip: 100, knee: 90, leftToe: 60, rightToe: 60 }
+      angles: { hip: 100, knee: 90, leftToe: -60, rightToe: 60 }
     },
     frontRight: {
       base: { x: 2.5, y: -0.3, z: -0.6 },
-      angles: { hip: 100, knee: -90, leftToe: 60, rightToe: 60 }
+      angles: { hip: 100, knee: -90, leftToe: -60, rightToe: 60 }
     },
     backLeft: {
       base: { x: 0.5, y: -0.4, z: 0.7 },
-      angles: { hip: 100, knee: 90, leftToe: 65, rightToe: 65 }
+      angles: { hip: 100, knee: 90, leftToe: -60, rightToe: 60 }
     },
     backRight: {
       base: { x: 0.5, y: -0.4, z: -0.7 },
-      angles: { hip: 100, knee: -90, leftToe: 65, rightToe: 65 }
+      angles: { hip: 100, knee: -90, leftToe: -60, rightToe: 60 }
     }
   };
 }
