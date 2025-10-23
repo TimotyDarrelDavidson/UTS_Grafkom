@@ -1,5 +1,5 @@
-import { MyObject } from "./myObject.js";
-import { LIBS } from "./libs.js";
+import { MyObject } from "../myObject.js";
+import { LIBS } from "../libs.js";
 import { generateBadanVibrava } from "./badan.js";
 import { generateKepala } from "./kepala.js";
 import { generateMata } from "./mata.js";

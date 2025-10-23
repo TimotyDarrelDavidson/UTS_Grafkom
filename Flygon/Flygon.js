@@ -1,5 +1,5 @@
-import { MyObject } from "./myObject.js";
-import { LIBS } from "./libs.js";
+import { MyObject } from "../myObject.js";
+import { LIBS } from "../libs.js";
 import { generateFlygonBodyBezier } from "./BodyParts/Body/FlygonBody.js";
 import { generateFlygonBelly } from "./BodyParts/Body/FlygonBelly.js";
 import { generateFlygonHead } from "./BodyParts/Head/FlygonHead.js";
