@@ -84,18 +84,18 @@ function main() {
 
     Gl.enableVertexAttribArray(_position);
     Gl.enableVertexAttribArray(_color);
-    
+
     Gl.useProgram(SHADER_PROGRAM);
-    
+
     // --- Enable blending for opacity ---
     Gl.enable(Gl.DEPTH_TEST);
     Gl.depthFunc(Gl.LEQUAL);
     Gl.enable(Gl.BLEND);
     Gl.blendFunc(Gl.SRC_ALPHA, Gl.ONE_MINUS_SRC_ALPHA);
-    
+
     Gl.clearColor(0.5, 0.5, 0.5, 1.0);
     Gl.clearDepth(1.0);
-    
+
     // Generate geometry
     var bodyData = generateBadanVibrava(8, 0.8, 0.2, 120, 48);
     var headData = generateKepala(1.4, 1.3, 1.4, 30, 30);
@@ -135,7 +135,7 @@ function main() {
         clawColor: [0.15, 0.15, 0.15],
     });
     var wingAttachmentData = generateVibravaWingAttachment(0.2, 0.2, 1.0, 40, 40, [0.9, 0.9, 0.9]);
-    
+
 
     // Create MyObject instances
     var Body = new MyObject(
@@ -352,12 +352,12 @@ function main() {
     LIBS.translateY(LeftWingAttachment.MOVE_MATRIX, 1.2);
     LIBS.translateX(LeftWingAttachment.MOVE_MATRIX, 4.8);
     LIBS.translateZ(LeftWingAttachment.MOVE_MATRIX, -.5);
-    
+
     LIBS.rotateY(RightWingAttachment.MOVE_MATRIX, 50 * Math.PI / 180); // 90°
     LIBS.translateY(RightWingAttachment.MOVE_MATRIX, 1.2);
     LIBS.translateX(RightWingAttachment.MOVE_MATRIX, 4.8);
     LIBS.translateZ(RightWingAttachment.MOVE_MATRIX, .5);
-    
+
     // Left Tail Fin
     temp = LIBS.get_I4();
     LIBS.translateY(temp, 2);
@@ -532,9 +532,13 @@ function main() {
     CANVAS.addEventListener("mousemove", mouseMove, false);
     CANVAS.addEventListener("wheel", mouseWheel, false);
 
-    var wingFlapSpeed = 2.0;
+    var wingFlapSpeed = 35.0;
     var wingFlapAmount = Math.PI / 10; // 30 degrees
     var time = 0;
+
+    var wiggleSpeed = 3.0;              // how fast the wiggle happens
+    var wiggleAmount = 0.1;            // how strong the wiggle (rotation)
+    var hoverHeight = Math.sin(time * wiggleSpeed) * 0.3; // up and down motion
 
     var animate = function () {
         Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
@@ -612,7 +616,7 @@ function main() {
         RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
 
         temp = LIBS.get_I4();
-        LIBS.rotateZ(temp, Math.PI / 4 + wingAngle ); // Mirror the left wing
+        LIBS.rotateZ(temp, Math.PI / 4 + wingAngle); // Mirror the left wing
         RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
 
         temp = LIBS.get_I4();
@@ -649,6 +653,61 @@ function main() {
         RightBottomWing.MOVE_MATRIX = LIBS.multiply(RightBottomWing.MOVE_MATRIX, temp);
 
         LIBS.translateZ(RightBottomWing.MOVE_MATRIX, -1.7);
+
+
+        // Hovering effect
+        temp = LIBS.get_I4();
+        LIBS.translateY(temp, hoverHeight);
+        Body.MOVE_MATRIX = LIBS.multiply(LIBS.get_I4(), temp);
+
+        // Gentle wiggle up and down rotation
+        temp = LIBS.get_I4();
+        LIBS.rotateZ(temp, Math.sin(time * wiggleSpeed) * wiggleAmount);
+        Body.MOVE_MATRIX = LIBS.multiply(Body.MOVE_MATRIX, temp);
+
+        // Head wiggle
+        LIBS.set_I4(Head.MOVE_MATRIX);
+        temp = LIBS.get_I4();
+        LIBS.translateX(temp, 4.8); // keep in place at front
+        LIBS.rotateZ(temp, Math.sin(time * wiggleSpeed * 1.5) * 0.05);
+        LIBS.rotateX(temp, Math.cos(time * wiggleSpeed * 1.5) * 0.03);
+        Head.MOVE_MATRIX = LIBS.multiply(Head.MOVE_MATRIX, temp);
+
+
+        // --- ORGANIC LEG WIGGLE (each leg moves differently) ---
+        Object.entries(legs).forEach(([name, parts], idx) => {
+            const base = legPositions[name];
+
+            // Each leg gets its own unique rhythm and phase offset
+            const legSpeed = wiggleSpeed * (1.5 + 0.3 * Math.sin(idx * 1.2)) * 0.5;  // vary speed
+            const legPhase = idx * 0.8;                                        // offset timing
+            const swing = Math.sin(time * legSpeed + legPhase) * (3 + idx) * Math.PI / 180; // 3–6° swing range
+
+            // Reset thigh base transform
+            LIBS.set_I4(parts.thigh.MOVE_MATRIX);
+            LIBS.translateX(parts.thigh.MOVE_MATRIX, base.base.x);
+            LIBS.translateY(parts.thigh.MOVE_MATRIX, base.base.y);
+            LIBS.translateZ(parts.thigh.MOVE_MATRIX, base.base.z);
+
+            // Apply original hip + added swing
+            const hipBase = (name.includes("Left") ? -base.angles.hip : base.angles.hip) * Math.PI / 180;
+            LIBS.rotateX(parts.thigh.MOVE_MATRIX, hipBase + swing);
+
+            // Shin follows thigh naturally
+            LIBS.set_I4(parts.shin.MOVE_MATRIX);
+            LIBS.translateY(parts.shin.MOVE_MATRIX, -1.2);
+            LIBS.rotateX(parts.shin.MOVE_MATRIX, base.angles.knee * Math.PI / 180 - swing * 0.5);
+
+            // Toes (steady)
+            LIBS.set_I4(parts.leftToe.MOVE_MATRIX);
+            LIBS.translateY(parts.leftToe.MOVE_MATRIX, -1.5);
+            LIBS.rotateX(parts.leftToe.MOVE_MATRIX, base.angles.leftToe * Math.PI / 180);
+
+            LIBS.set_I4(parts.rightToe.MOVE_MATRIX);
+            LIBS.translateY(parts.rightToe.MOVE_MATRIX, -1.5);
+            LIBS.rotateX(parts.rightToe.MOVE_MATRIX, base.angles.rightToe * Math.PI / 180);
+        });
+
 
         Body.render(MODEL);
 
