@@ -6,6 +6,7 @@ import { generateMata } from "./mata.js";
 import { generateCurvedCone } from "./horn.js";
 import { generateWing } from "./wings.js";
 import { generateVibravaLeg, getLegPositions } from "./legs.js";
+import { generateVibravaWingAttachment } from "./wingAttachment.js";
 
 function main() {
     var CANVAS = document.getElementById("mycanvas");
@@ -92,7 +93,7 @@ function main() {
     Gl.enable(Gl.BLEND);
     Gl.blendFunc(Gl.SRC_ALPHA, Gl.ONE_MINUS_SRC_ALPHA);
 
-    Gl.clearColor(1, 1, 1, 1.0);
+    Gl.clearColor(0.5, 0.5, 0.5, 1.0);
     Gl.clearDepth(1.0);
 
     // Generate geometry
@@ -113,15 +114,15 @@ function main() {
     });
     var rightHornData = leftHornData;
     var wingData = generateWing({
-        w: 1,
-        h: 2,
+        w: 1.5,
+        h: 3,
         z: 0,
         color: [0.26, 0.86, 0.24], // bright green
-        twoSided: true,
+        // twoSided: true,
     });
     var tailFinData = generateWing({
-        w: 0.5,
-        h: 1.0,
+        w: 1.,
+        h: 2.0,
         z: 0,
         color: [0.26, 0.86, 0.24], // bright green
         twoSided: true,
@@ -133,7 +134,10 @@ function main() {
         color: [0.25, 0.25, 0.2],
         clawColor: [0.15, 0.15, 0.15],
     });
+    var wingAttachmentData = generateVibravaWingAttachment(0.2, 0.2, 1.0, 40, 40, [0.9, 0.9, 0.9]);
 
+
+    // Create MyObject instances
     var Body = new MyObject(
         Gl,
         SHADER_PROGRAM,
@@ -308,8 +312,28 @@ function main() {
             ),
         };
     });
+    var LeftWingAttachment = new MyObject(
+        Gl,
+        SHADER_PROGRAM,
+        _position,
+        _color,
+        _Mmatrix,
+        wingAttachmentData.vertices,
+        wingAttachmentData.faces
+    );
+    var RightWingAttachment = new MyObject(
+        Gl,
+        SHADER_PROGRAM,
+        _position,
+        _color,
+        _Mmatrix,
+        wingAttachmentData.vertices,
+        wingAttachmentData.faces
+    );
+
 
     // Positioning
+    var temp;
     LIBS.translateX(Head.MOVE_MATRIX, 4.8);
 
     // Example: set eye opacity (optional)
@@ -323,105 +347,20 @@ function main() {
     LIBS.rotateY(RightHorn.MOVE_MATRIX, -Math.PI / 9); // point backwards
 
     // Wings positioning
-    // Left Top Wing
-    var temp = LIBS.get_I4();
-    LIBS.translateY(temp, 2);
-    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
+    // Wing attachment point
+    LIBS.rotateY(LeftWingAttachment.MOVE_MATRIX, 130 * Math.PI / 180); // 90°
+    LIBS.translateY(LeftWingAttachment.MOVE_MATRIX, 1.2);
+    LIBS.translateX(LeftWingAttachment.MOVE_MATRIX, 4.8);
+    LIBS.translateZ(LeftWingAttachment.MOVE_MATRIX, -.5);
 
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, Math.PI / 2); // 90°
-    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateZ(temp, Math.PI / 4); // 45°
-    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, Math.PI / 4); // 45°
-    LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
-
-    LIBS.translateX(LeftTopWing.MOVE_MATRIX, 3);
-    LIBS.translateY(LeftTopWing.MOVE_MATRIX, 1);
-    LIBS.translateZ(LeftTopWing.MOVE_MATRIX, 0.6);
-
-    // Left Bottom Wing
-    temp = LIBS.get_I4();
-    LIBS.translateY(temp, 2);
-    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, Math.PI / 2); // 90°
-    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateZ(temp, Math.PI / 2.5); // 30°
-    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, Math.PI / 4); // 45°
-    LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
-
-    LIBS.translateX(LeftBottomWing.MOVE_MATRIX, 3);
-    LIBS.translateY(LeftBottomWing.MOVE_MATRIX, 1);
-    LIBS.translateZ(LeftBottomWing.MOVE_MATRIX, 0.6);
-
-    // Right Bottom Wing
-    temp = LIBS.get_I4();
-    LIBS.translateY(temp, 2);
-    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, Math.PI / 2); // 90°
-    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateZ(temp, Math.PI / 4); // 45°
-    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
-
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, -Math.PI / 4); // 45°
-    RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
-
-    LIBS.translateX(RightTopWing.MOVE_MATRIX, 3);
-    LIBS.translateY(RightTopWing.MOVE_MATRIX, 1);
-    LIBS.translateZ(RightTopWing.MOVE_MATRIX, -0.6);
-
-    // Right Bottom Wing
-    temp = LIBS.get_I4();
-    LIBS.translateY(temp, 2);
-    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
-        RightBottomWing.MOVE_MATRIX,
-        temp
-    );
-
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, Math.PI / 2); // 90°
-    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
-        RightBottomWing.MOVE_MATRIX,
-        temp
-    );
-
-    temp = LIBS.get_I4();
-    LIBS.rotateZ(temp, Math.PI / 2.5); // 30°
-    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
-        RightBottomWing.MOVE_MATRIX,
-        temp
-    );
-
-    temp = LIBS.get_I4();
-    LIBS.rotateY(temp, -Math.PI / 4); // 45°
-    RightBottomWing.MOVE_MATRIX = LIBS.multiply(
-        RightBottomWing.MOVE_MATRIX,
-        temp
-    );
-
-    LIBS.translateX(RightBottomWing.MOVE_MATRIX, 3);
-    LIBS.translateY(RightBottomWing.MOVE_MATRIX, 1);
-    LIBS.translateZ(RightBottomWing.MOVE_MATRIX, -0.6);
+    LIBS.rotateY(RightWingAttachment.MOVE_MATRIX, 50 * Math.PI / 180); // 90°
+    LIBS.translateY(RightWingAttachment.MOVE_MATRIX, 1.2);
+    LIBS.translateX(RightWingAttachment.MOVE_MATRIX, 4.8);
+    LIBS.translateZ(RightWingAttachment.MOVE_MATRIX, .5);
 
     // Left Tail Fin
     temp = LIBS.get_I4();
-    LIBS.translateY(temp, 1);
+    LIBS.translateY(temp, 2);
     LeftTailFin.MOVE_MATRIX = LIBS.multiply(LeftTailFin.MOVE_MATRIX, temp);
 
     temp = LIBS.get_I4();
@@ -442,7 +381,7 @@ function main() {
 
     // Right Tail Fin
     temp = LIBS.get_I4();
-    LIBS.translateY(temp, 1);
+    LIBS.translateY(temp, 2);
     RightTailFin.MOVE_MATRIX = LIBS.multiply(RightTailFin.MOVE_MATRIX, temp);
 
     temp = LIBS.get_I4();
@@ -507,10 +446,13 @@ function main() {
     Head.childs.push(LeftHorn);
     Head.childs.push(RightHorn);
 
-    Body.childs.push(LeftTopWing);
-    Body.childs.push(LeftBottomWing);
-    Body.childs.push(RightTopWing);
-    Body.childs.push(RightBottomWing);
+    Body.childs.push(LeftWingAttachment);
+    Body.childs.push(RightWingAttachment);
+
+    LeftWingAttachment.childs.push(LeftTopWing);
+    LeftWingAttachment.childs.push(LeftBottomWing);
+    RightWingAttachment.childs.push(RightTopWing);
+    RightWingAttachment.childs.push(RightBottomWing);
 
     Body.childs.push(LeftTailFin);
     Body.childs.push(RightTailFin);
@@ -590,9 +532,13 @@ function main() {
     CANVAS.addEventListener("mousemove", mouseMove, false);
     CANVAS.addEventListener("wheel", mouseWheel, false);
 
-    var wingFlapSpeed = 25.0;
-    var wingFlapAmount = Math.PI / 6; // 30 degrees
+    var wingFlapSpeed = 35.0;
+    var wingFlapAmount = Math.PI / 10; // 30 degrees
     var time = 0;
+
+    var wiggleSpeed = 3.0;              // how fast the wiggle happens
+    var wiggleAmount = 0.1;            // how strong the wiggle (rotation)
+    var hoverHeight = Math.sin(time * wiggleSpeed) * 0.3; // up and down motion
 
     var animate = function () {
         Gl.viewport(0, 0, CANVAS.width, CANVAS.height);
@@ -613,7 +559,7 @@ function main() {
         // Animate Left Top Wing
         LIBS.set_I4(LeftTopWing.MOVE_MATRIX);
         temp = LIBS.get_I4();
-        LIBS.translateY(temp, 2);
+        LIBS.translateY(temp, 3);
         LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
 
         temp = LIBS.get_I4();
@@ -625,17 +571,15 @@ function main() {
         LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
 
         temp = LIBS.get_I4();
-        LIBS.rotateY(temp, Math.PI / 4);
+        LIBS.rotateY(temp, -Math.PI / 2);
         LeftTopWing.MOVE_MATRIX = LIBS.multiply(LeftTopWing.MOVE_MATRIX, temp);
 
-        LIBS.translateX(LeftTopWing.MOVE_MATRIX, 3);
-        LIBS.translateY(LeftTopWing.MOVE_MATRIX, 1);
-        LIBS.translateZ(LeftTopWing.MOVE_MATRIX, 0.6);
+        LIBS.translateZ(LeftTopWing.MOVE_MATRIX, -1.7);
 
         // Animate Left Bottom Wing
         LIBS.set_I4(LeftBottomWing.MOVE_MATRIX);
         temp = LIBS.get_I4();
-        LIBS.translateY(temp, 2);
+        LIBS.translateY(temp, 3);
         LeftBottomWing.MOVE_MATRIX = LIBS.multiply(
             LeftBottomWing.MOVE_MATRIX,
             temp
@@ -649,27 +593,22 @@ function main() {
         );
 
         temp = LIBS.get_I4();
-        LIBS.rotateZ(temp, Math.PI / 2.5 + wingAngle * 0.8); // Slightly different phase
+        LIBS.rotateZ(temp, Math.PI / 2.5 + wingAngle * 0.5); // Slightly different phase
         LeftBottomWing.MOVE_MATRIX = LIBS.multiply(
             LeftBottomWing.MOVE_MATRIX,
             temp
         );
 
         temp = LIBS.get_I4();
-        LIBS.rotateY(temp, Math.PI / 4);
-        LeftBottomWing.MOVE_MATRIX = LIBS.multiply(
-            LeftBottomWing.MOVE_MATRIX,
-            temp
-        );
+        LIBS.rotateY(temp, -Math.PI / 2);
+        LeftBottomWing.MOVE_MATRIX = LIBS.multiply(LeftBottomWing.MOVE_MATRIX, temp);
 
-        LIBS.translateX(LeftBottomWing.MOVE_MATRIX, 3);
-        LIBS.translateY(LeftBottomWing.MOVE_MATRIX, 1);
-        LIBS.translateZ(LeftBottomWing.MOVE_MATRIX, 0.6);
+        LIBS.translateZ(LeftBottomWing.MOVE_MATRIX, -1.7);
 
         // Animate Right Top Wing
         LIBS.set_I4(RightTopWing.MOVE_MATRIX);
         temp = LIBS.get_I4();
-        LIBS.translateY(temp, 2);
+        LIBS.translateY(temp, 3);
         RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
 
         temp = LIBS.get_I4();
@@ -681,17 +620,15 @@ function main() {
         RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
 
         temp = LIBS.get_I4();
-        LIBS.rotateY(temp, -Math.PI / 4);
+        LIBS.rotateY(temp, -Math.PI / 2);
         RightTopWing.MOVE_MATRIX = LIBS.multiply(RightTopWing.MOVE_MATRIX, temp);
 
-        LIBS.translateX(RightTopWing.MOVE_MATRIX, 3);
-        LIBS.translateY(RightTopWing.MOVE_MATRIX, 1);
-        LIBS.translateZ(RightTopWing.MOVE_MATRIX, -0.6);
+        LIBS.translateZ(RightTopWing.MOVE_MATRIX, -1.7);
 
         // Animate Right Bottom Wing
         LIBS.set_I4(RightBottomWing.MOVE_MATRIX);
         temp = LIBS.get_I4();
-        LIBS.translateY(temp, 2);
+        LIBS.translateY(temp, 3);
         RightBottomWing.MOVE_MATRIX = LIBS.multiply(
             RightBottomWing.MOVE_MATRIX,
             temp
@@ -712,15 +649,65 @@ function main() {
         );
 
         temp = LIBS.get_I4();
-        LIBS.rotateY(temp, -Math.PI / 4);
-        RightBottomWing.MOVE_MATRIX = LIBS.multiply(
-            RightBottomWing.MOVE_MATRIX,
-            temp
-        );
+        LIBS.rotateY(temp, -Math.PI / 2);
+        RightBottomWing.MOVE_MATRIX = LIBS.multiply(RightBottomWing.MOVE_MATRIX, temp);
 
-        LIBS.translateX(RightBottomWing.MOVE_MATRIX, 3);
-        LIBS.translateY(RightBottomWing.MOVE_MATRIX, 1);
-        LIBS.translateZ(RightBottomWing.MOVE_MATRIX, -0.6);
+        LIBS.translateZ(RightBottomWing.MOVE_MATRIX, -1.7);
+
+
+        // Hovering effect
+        temp = LIBS.get_I4();
+        LIBS.translateY(temp, hoverHeight);
+        Body.MOVE_MATRIX = LIBS.multiply(LIBS.get_I4(), temp);
+
+        // Gentle wiggle up and down rotation
+        temp = LIBS.get_I4();
+        LIBS.rotateZ(temp, Math.sin(time * wiggleSpeed) * wiggleAmount);
+        Body.MOVE_MATRIX = LIBS.multiply(Body.MOVE_MATRIX, temp);
+
+        // Head wiggle
+        LIBS.set_I4(Head.MOVE_MATRIX);
+        temp = LIBS.get_I4();
+        LIBS.translateX(temp, 4.8); // keep in place at front
+        LIBS.rotateZ(temp, Math.sin(time * wiggleSpeed * 1.5) * 0.05);
+        LIBS.rotateX(temp, Math.cos(time * wiggleSpeed * 1.5) * 0.03);
+        Head.MOVE_MATRIX = LIBS.multiply(Head.MOVE_MATRIX, temp);
+
+
+        // --- ORGANIC LEG WIGGLE (each leg moves differently) ---
+        Object.entries(legs).forEach(([name, parts], idx) => {
+            const base = legPositions[name];
+
+            // Each leg gets its own unique rhythm and phase offset
+            const legSpeed = wiggleSpeed * (1.5 + 0.3 * Math.sin(idx * 1.2)) * 0.5;  // vary speed
+            const legPhase = idx * 0.8;                                        // offset timing
+            const swing = Math.sin(time * legSpeed + legPhase) * (3 + idx) * Math.PI / 180; // 3–6° swing range
+
+            // Reset thigh base transform
+            LIBS.set_I4(parts.thigh.MOVE_MATRIX);
+            LIBS.translateX(parts.thigh.MOVE_MATRIX, base.base.x);
+            LIBS.translateY(parts.thigh.MOVE_MATRIX, base.base.y);
+            LIBS.translateZ(parts.thigh.MOVE_MATRIX, base.base.z);
+
+            // Apply original hip + added swing
+            const hipBase = (name.includes("Left") ? -base.angles.hip : base.angles.hip) * Math.PI / 180;
+            LIBS.rotateX(parts.thigh.MOVE_MATRIX, hipBase + swing);
+
+            // Shin follows thigh naturally
+            LIBS.set_I4(parts.shin.MOVE_MATRIX);
+            LIBS.translateY(parts.shin.MOVE_MATRIX, -1.2);
+            LIBS.rotateX(parts.shin.MOVE_MATRIX, base.angles.knee * Math.PI / 180 - swing * 0.5);
+
+            // Toes (steady)
+            LIBS.set_I4(parts.leftToe.MOVE_MATRIX);
+            LIBS.translateY(parts.leftToe.MOVE_MATRIX, -1.5);
+            LIBS.rotateX(parts.leftToe.MOVE_MATRIX, base.angles.leftToe * Math.PI / 180);
+
+            LIBS.set_I4(parts.rightToe.MOVE_MATRIX);
+            LIBS.translateY(parts.rightToe.MOVE_MATRIX, -1.5);
+            LIBS.rotateX(parts.rightToe.MOVE_MATRIX, base.angles.rightToe * Math.PI / 180);
+        });
+
 
         Body.render(MODEL);
 
