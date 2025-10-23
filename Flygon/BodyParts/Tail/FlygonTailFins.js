@@ -1,132 +1,135 @@
 // BodyParts/Tail/FlygonTailFins.js
 export function generateFlygonTailFins(size = 1, options = {}) {
-  const centerColor = options.centerColor || [0.55, 0.98, 0.55];
-  const midColor = options.midColor || [0.2, 0.8, 0.2];
-  const edgeColor = options.edgeColor || [1.0, 0.1, 0.1];
+  // --- colors to mirror the wing ---
+  const centerColor = options.centerColor || [0.6, 1.0, 0.6]; // light green
+  const midColor = options.midColor || [0.4, 0.9, 0.4]; // medium green
+  const edgeColor = options.edgeColor || [0.8, 0.2, 0.2]; // red border
 
   const twoSided = !!options.twoSided;
-  const borderWidth = options.borderWidth ?? 0.22;
-  const spreadDeg = options.spreadDeg ?? 30;
-  const zEps = options.zEps ?? 0.0005;
-  const sideSeparation = options.sideSeparation ?? size * 0.14; // NEW: lateral shift of side fins
-  const stackZGap = options.stackZGap ?? 0.002; // NEW: z layering between fins
+  const borderWidth = options.borderWidth ?? 0.3;
+  const spreadDeg = options.spreadDeg ?? 25;
+  const sideSeparation = options.sideSeparation ?? size * 0.3;
+  const zEps = 0.02;
+
+  const toRad = (d) => (d * Math.PI) / 180;
 
   const vertices = [];
   const faces = [];
-  const toRad = (d) => (d * Math.PI) / 180;
 
   function rot2(x, y, a) {
     const c = Math.cos(a),
       s = Math.sin(a);
     return [x * c - y * s, x * s + y * c];
   }
+  
   function pushV(x, y, z, c) {
     vertices.push(x, y, z, c[0], c[1], c[2]);
   }
 
-  function addSingleFin(angleRad, shiftX = 0, shiftY = 0, zStack = 0) {
-    const base = vertices.length / 6;
+  function addSingleFin(
+    angleRad,
+    shiftX = 0,
+    shiftY = 0,
+    zStack = 0,
+    col = { center: centerColor, inner: midColor, edge: edgeColor },
+    scale = 1.0
+  ) {
+    // Diamond proportions: 2:1 height to width ratio
+    const halfW = size * 0.4 * scale;
+    const halfH = size * 0.8 * scale;
+    const innerW = halfW * (1 - borderWidth);
+    const innerH = halfH * (1 - borderWidth);
 
-    const innerVerts = [
-      [0, 0, zEps + zStack],
-      [0, size * (0.5 - borderWidth), zEps + zStack],
-      [size * (0.5 - borderWidth), 0, zEps + zStack],
-      [0, -size * (2 - borderWidth * 2), zEps + zStack],
-      [-size * (0.5 - borderWidth), 0, zEps + zStack],
+    // Inner diamond (green membrane)
+    const innerRing = [
+      [0, 0, zEps + zStack],           // center
+      [0, innerH, zEps + zStack],      // top
+      [innerW, 0, zEps + zStack],      // right
+      [0, -innerH, zEps + zStack],     // bottom
+      [-innerW, 0, zEps + zStack],     // left
     ];
-    const innerCols = [centerColor, midColor, midColor, midColor, midColor];
 
-    const outerVerts = [
-      [0, size / 2, -zEps + zStack],
-      [size * 0.5, 0, -zEps + zStack],
-      [0, -size * 2, -zEps + zStack],
-      [-size * 0.5, 0, -zEps + zStack],
+    // Outer diamond (red border)
+    const outerRing = [
+      [0, halfH, -zEps + zStack],      // top
+      [halfW, 0, -zEps + zStack],      // right
+      [0, -halfH, -zEps + zStack],     // bottom
+      [-halfW, 0, -zEps + zStack],     // left
     ];
 
-    // rotate + translate (local shift rotated with the fin)
     const [sx, sy] = rot2(shiftX, shiftY, angleRad);
+    const RT = ([x, y]) => rot2(x, y, angleRad);
 
-    for (let i = 0; i < innerVerts.length; i++) {
-      const [x, y, z] = innerVerts[i];
-      const [xr, yr] = rot2(x, y, angleRad);
-      pushV(xr + sx, yr + sy, z, innerCols[i]);
-    }
-    for (let i = 0; i < outerVerts.length; i++) {
-      const [x, y, z] = outerVerts[i];
-      const [xr, yr] = rot2(x, y, angleRad);
-      pushV(xr + sx, yr + sy, z, edgeColor);
-    }
+    // 1) GREEN membrane (inner diamond)
+    const baseInnerGreen = vertices.length / 6;
+    innerRing.forEach(([x, y, z], i) => {
+      const [xr, yr] = RT([x, y]);
+      const useShift = [sx, sy];
+      const color = i === 0 ? col.center : col.inner;
+      pushV(xr + useShift[0], yr + useShift[1], z, color);
+    });
 
-    // faces (same pattern)
+    // 2) RED duplicate (for crisp border seam)
+    const baseInnerRed = vertices.length / 6;
+    innerRing.forEach(([x, y, z], i) => {
+      const [xr, yr] = RT([x, y]);
+      const useShift = [sx, sy];
+      pushV(xr + useShift[0], yr + useShift[1], z, col.edge);
+    });
+
+    // 3) RED outer diamond
+    const baseOuterRed = vertices.length / 6;
+    outerRing.forEach(([x, y, z]) => {
+      const [xr, yr] = RT([x, y]);
+      pushV(xr + sx, yr + sy, z, col.edge);
+    });
+
+    // Faces for the fin
     faces.push(
-      base + 0,
-      base + 1,
-      base + 2,
-      base + 0,
-      base + 2,
-      base + 3,
-      base + 0,
-      base + 3,
-      base + 4,
-      base + 0,
-      base + 4,
-      base + 1,
+      // Inner green diamond triangles
+      baseInnerGreen + 0, baseInnerGreen + 1, baseInnerGreen + 2,
+      baseInnerGreen + 0, baseInnerGreen + 2, baseInnerGreen + 3,
+      baseInnerGreen + 0, baseInnerGreen + 3, baseInnerGreen + 4,
+      baseInnerGreen + 0, baseInnerGreen + 4, baseInnerGreen + 1,
 
-      base + 1,
-      base + 5,
-      base + 6,
-      base + 1,
-      base + 6,
-      base + 2,
+      // Red border strips
+      baseInnerRed + 1, baseOuterRed + 0, baseOuterRed + 1,
+      baseInnerRed + 1, baseOuterRed + 1, baseInnerRed + 2,
 
-      base + 2,
-      base + 6,
-      base + 7,
-      base + 2,
-      base + 7,
-      base + 3,
+      baseInnerRed + 2, baseOuterRed + 1, baseOuterRed + 2,
+      baseInnerRed + 2, baseOuterRed + 2, baseInnerRed + 3,
 
-      base + 3,
-      base + 7,
-      base + 8,
-      base + 3,
-      base + 8,
-      base + 4,
+      baseInnerRed + 3, baseOuterRed + 2, baseOuterRed + 3,
+      baseInnerRed + 3, baseOuterRed + 3, baseInnerRed + 4,
 
-      base + 4,
-      base + 8,
-      base + 5,
-      base + 4,
-      base + 5,
-      base + 1
+      baseInnerRed + 4, baseOuterRed + 3, baseOuterRed + 0,
+      baseInnerRed + 4, baseOuterRed + 0, baseInnerRed + 1
     );
   }
 
-  // Center fin on the middle layer
-  addSingleFin(0, 0, 0, 0);
-
-  // Side fins: fan with spread, push sideways, and place on ± z layers
-  addSingleFin(+toRad(spreadDeg), +sideSeparation, 0, +stackZGap);
-  addSingleFin(-toRad(spreadDeg), -sideSeparation, 0, -stackZGap);
+  const layerZ = 0;
+  
+  // Center fin pointing up
+  addSingleFin(0, 0, 0, layerZ, undefined, 1.0);
+  
+  // Right and left fins spread at angles
+  addSingleFin(+toRad(spreadDeg), +sideSeparation, 0, layerZ + 0.01, undefined, 0.85);
+  addSingleFin(-toRad(spreadDeg), -sideSeparation, 0, layerZ + 0.02, undefined, 0.85);
 
   if (twoSided) {
     const baseCount = vertices.length / 6;
-    const backGap = 0.0006;
-
+    const backGap = 0.0015;
     for (let i = 0; i < baseCount; i++) {
       const k = i * 6;
-      const z = vertices[k + 2];
-      const sign = z === 0 ? 1 : z > 0 ? 1 : -1;
       vertices.push(
-        vertices[k], // x
-        vertices[k + 1], // y
-        -z - sign * backGap, // mirrored Z, nudged opposite side
-        vertices[k + 3], // r
-        vertices[k + 4], // g
-        vertices[k + 5] // b
+        vertices[k],
+        vertices[k + 1],
+        -vertices[k + 2] - backGap,
+        vertices[k + 3],
+        vertices[k + 4],
+        vertices[k + 5]
       );
     }
-
     const orig = faces.length;
     for (let i = 0; i < orig; i += 3) {
       faces.push(
@@ -136,6 +139,6 @@ export function generateFlygonTailFins(size = 1, options = {}) {
       );
     }
   }
-
+  
   return { vertices, faces };
 }

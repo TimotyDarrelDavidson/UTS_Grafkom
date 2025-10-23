@@ -1,116 +1,85 @@
 // BodyParts/Body/FlygonWing.js
 export function generateFlygonWing(size = 1, options = {}) {
-    // Softer gradient colors
-    const centerColor = options.centerColor || [0.6, 1.0, 0.6]; // light green
-    const midColor    = options.midColor    || [0.4, 0.9, 0.4]; // medium green
-    const edgeColor   = options.edgeColor   || [0.8, 0.2, 0.2]; // red border
-    const twoSided    = !!options.twoSided;
-    const borderWidth = options.borderWidth || 0.2; // controls border thickness
+  const topColor    = options.topColor    || [181/255, 235/255, 145/255];
+  const midColor    = options.midColor    || [0.8, 0.2, 0.2];
+  const bottomColor = options.bottomColor || [181/255, 235/255, 145/255];
+  const twoSided    = !!options.twoSided;
+  const borderWidth = options.borderWidth || 0.2;
+  const zGap        = options.zGap || 0.015;
+  const redScale    = options.redScale || 1.15; // <-- NEW: expand red membrane
 
-    const vertices = [];
-    const faces = [];
+  const vertices = [];
+  const faces = [];
 
-    // Inner diamond (green part)
+  function addWingLayer(color, zOffset, scale = 1.0) {
+    const base = vertices.length / 6;
+
+    // inner diamond
     const innerVerts = [
-        [0, 0, 0],                    // center - 0
-        [0, size * (0.5 - borderWidth), 0],     // top inner - 1
-        [size * (0.5 - borderWidth), 0, 0],     // right inner - 2
-        [0, -size * (2 - borderWidth * 2), 0],  // bottom inner - 3
-        [-size * (0.5 - borderWidth), 0, 0]     // left inner - 4
+      [0, 0, zOffset],
+      [0, size * (0.5 - borderWidth) * scale, zOffset],
+      [size * (0.5 - borderWidth) * scale, 0, zOffset],
+      [0, -size * (2 - borderWidth * 2) * scale, zOffset],
+      [-size * (0.5 - borderWidth) * scale, 0, zOffset],
     ];
 
-    const innerColors = [
-        centerColor,
-        midColor,
-        midColor,
-        midColor,
-        midColor
-    ];
-
-    // Outer border (red part)
+    // outer diamond
     const outerVerts = [
-        [0, size / 2, 0],             // top outer - 5
-        [size * 0.5, 0, 0],           // right outer - 6
-        [0, -size * 2, 0],            // bottom outer - 7
-        [-size * 0.5, 0, 0]           // left outer - 8
+      [0, size / 2 * scale, zOffset],
+      [size * 0.5 * scale, 0, zOffset],
+      [0, -size * 2 * scale, zOffset],
+      [-size * 0.5 * scale, 0, zOffset],
     ];
 
-    // Add all vertices to the buffer
-    // Inner vertices first (0-4)
     for (let i = 0; i < innerVerts.length; i++) {
-        const [x, y, z] = innerVerts[i];
-        const [r, g, b] = innerColors[i];
-        vertices.push(x, y, z, r, g, b);
+      const [x, y, z] = innerVerts[i];
+      vertices.push(x, y, z, color[0], color[1], color[2]);
     }
-
-    // Outer vertices next (5-8)
     for (let i = 0; i < outerVerts.length; i++) {
-        const [x, y, z] = outerVerts[i];
-        const [r, g, b] = edgeColor;
-        vertices.push(x, y, z, r, g, b);
+      const [x, y, z] = outerVerts[i];
+      vertices.push(x, y, z, color[0], color[1], color[2]);
     }
 
-    // Inner diamond faces (green part)
     faces.push(
-        0, 1, 2,  // center -> top inner -> right inner
-        0, 2, 3,  // center -> right inner -> bottom inner
-        0, 3, 4,  // center -> bottom inner -> left inner
-        0, 4, 1   // center -> left inner -> top inner
+      base + 0, base + 1, base + 2,
+      base + 0, base + 2, base + 3,
+      base + 0, base + 3, base + 4,
+      base + 0, base + 4, base + 1,
+
+      base + 1, base + 5, base + 6,
+      base + 1, base + 6, base + 2,
+      base + 2, base + 6, base + 7,
+      base + 2, base + 7, base + 3,
+      base + 3, base + 7, base + 8,
+      base + 3, base + 8, base + 4,
+      base + 4, base + 8, base + 5,
+      base + 4, base + 5, base + 1
     );
+  }
 
-    // Border faces (red part) - clean, sharp border
-    // Each border section is a quadrilateral made of 2 triangles
-    
-    // Top-right border section
-    faces.push(
-        1, 5, 6,  // top inner -> top outer -> right outer
-        1, 6, 2   // top inner -> right outer -> right inner
-    );
+  // top + bottom stay same size, middle (red) expanded
+  addWingLayer(topColor, +zGap, 1.0);
+  addWingLayer(midColor, 0, redScale);
+  addWingLayer(bottomColor, -zGap, 1.0);
 
-    // Right-bottom border section  
-    faces.push(
-        2, 6, 7,  // right inner -> right outer -> bottom outer
-        2, 7, 3   // right inner -> bottom outer -> bottom inner
-    );
-
-    // Bottom-left border section
-    faces.push(
-        3, 7, 8,  // bottom inner -> bottom outer -> left outer
-        3, 8, 4   // bottom inner -> left outer -> left inner
-    );
-
-    // Left-top border section
-    faces.push(
-        4, 8, 5,  // left inner -> left outer -> top outer
-        4, 5, 1   // left inner -> top outer -> top inner
-    );
-
-    // Optional: Two-sided wing
-    if (twoSided) {
-        const baseCount = vertices.length / 6;
-        
-        // Duplicate vertices for backside with slight Z offset
-        for (let i = 0; i < baseCount; i++) {
-            const baseIndex = i * 6;
-            vertices.push(
-                vertices[baseIndex],     // x
-                vertices[baseIndex + 1], // y
-                -0.001,                 // z (slightly behind)
-                vertices[baseIndex + 3], // r
-                vertices[baseIndex + 4], // g
-                vertices[baseIndex + 5]  // b
-            );
-        }
-
-        // Add backside faces (reversed winding order)
-        for (let i = 0; i < faces.length; i += 3) {
-            faces.push(
-                faces[i] + baseCount,
-                faces[i + 2] + baseCount,
-                faces[i + 1] + baseCount
-            );
-        }
+  if (twoSided) {
+    const baseCount = vertices.length / 6;
+    for (let i = 0; i < baseCount; i++) {
+      const k = i * 6;
+      vertices.push(
+        vertices[k], vertices[k + 1], -vertices[k + 2],
+        vertices[k + 3], vertices[k + 4], vertices[k + 5]
+      );
     }
+    const orig = faces.length;
+    for (let i = 0; i < orig; i += 3) {
+      faces.push(
+        faces[i] + baseCount,
+        faces[i + 2] + baseCount,
+        faces[i + 1] + baseCount
+      );
+    }
+  }
 
-    return { vertices, faces };
+  return { vertices, faces };
 }
