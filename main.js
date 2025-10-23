@@ -474,10 +474,10 @@ function main() {
     return b;
   }
 
-  const btnFlygon = makeBtn("Flygon");
   const btnTrapinch = makeBtn("Trapinch");
   const btnVibrava = makeBtn("Vibrava");
-  ui.append(btnFlygon, btnTrapinch, btnVibrava);
+  const btnFlygon = makeBtn("Flygon");
+  ui.append(btnTrapinch, btnVibrava, btnFlygon);
   document.body.appendChild(ui);
 
   // Smooth camera tween
@@ -501,14 +501,14 @@ function main() {
 
   // Camera presets (tweak to taste)
   const CAM = {
-  // wide hero: look at Flygon’s torso
-  flygon:   { zoom: 15, THETA: 0.0,  PHI: 0.0,  tx: 0.0,  ty: 0.0, tz: 0.0 },
-
   // look at Trapinch on the head
-  trapinch: { zoom:  3, THETA: 0.05, PHI:-0.30, tx: -5.0,  ty: 3.9, tz: 0.0 },
+  trapinch: { zoom:  4, THETA: 0.0, PHI: -0.2, tx: 0.0,  ty: 4.0, tz: -0.2 },
 
   // look at Vibrava on the back (behind neck)
-  vibrava:  { zoom: 10, THETA:-0.12, PHI:-0.15, tx:-0.1, ty: 2.0, tz:-0.4 },
+  vibrava:  { zoom:  5, THETA: 0.0, PHI: -0.1, tx: 0.0, ty: 0.0, tz: -6.0 },
+
+  // wide hero: look at Flygon’s torso
+  flygon:   { zoom: 15, THETA: 0.0,  PHI: 0.0,  tx: 0.0,  ty: 0.0, tz: 0.0 },
 };
 
 btnFlygon.onclick   = () => tweenCamera(CAM.flygon);
