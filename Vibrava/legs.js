@@ -62,7 +62,7 @@ export function generateVibravaLeg(config = {}) {
     shinRadius = 0.1,
     footLength = 0.8,
     footRadius = 0.08,
-    toeLength = 0.3,
+    toeLength = 1,
     color = [0.25, 0.25, 0.2],
   } = config;
 

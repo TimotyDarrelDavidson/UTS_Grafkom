@@ -4,51 +4,71 @@ export function generateWing({
   z = 0.0,
   innerColor = [0.26, 0.86, 0.24],  // bright green
   borderColor = [0.2, 0.2, 0.2],    // dark gray border
-  borderThickness = 0.1,            // how thick the border appears
+  borderThickness = 0.1,            // thickness of the border
   twoSided = true
 } = {}) {
   const vertices = [];
   const faces = [];
 
-  // outer diamond (border)
-  const P_outer = [
+  // Inner green size (base size)
+  const innerW = w * (1 - borderThickness);
+  const innerH = h * (1 - borderThickness);
+
+  // back green diamond (layer 1) - BELAKANG
+  const P_backGreen = [
+    [ +innerW, 0.0, z - 0.0002 ],
+    [ 0.0, +innerH, z - 0.0002 ],
+    [ -innerW, 0.0, z - 0.0002 ],
+    [ 0.0, -innerH, z - 0.0002 ],
+  ];
+
+  // black border diamond (layer 2) - TENGAH (lebih besar)
+  const P_border = [
     [ +w, 0.0, z ],
     [ 0.0, +h, z ],
     [ -w, 0.0, z ],
     [ 0.0, -h, z ],
   ];
 
-  // inner diamond (shrunken by borderThickness)
-  const iw = w * (1 - borderThickness);
-  const ih = h * (1 - borderThickness);
-  const P_inner = [
-    [ +iw, 0.0, z + 0.0001 ], // slight z offset to avoid z-fighting
-    [ 0.0, +ih, z + 0.0001 ],
-    [ -iw, 0.0, z + 0.0001 ],
-    [ 0.0, -ih, z + 0.0001 ],
+  // front green diamond (layer 3) - DEPAN (sama dengan layer 1)
+  const P_frontGreen = [
+    [ +innerW, 0.0, z + 0.0002 ],
+    [ 0.0, +innerH, z + 0.0002 ],
+    [ -innerW, 0.0, z + 0.0002 ],
+    [ 0.0, -innerH, z + 0.0002 ],
   ];
 
-  // --- Outer diamond vertices (border) ---
+  // --- Back green diamond vertices (index 0-3) ---
   for (let i = 0; i < 4; i++) {
-    vertices.push(P_outer[i][0], P_outer[i][1], P_outer[i][2],
-      borderColor[0], borderColor[1], borderColor[2]);
-  }
-
-  // --- Inner diamond vertices (green) ---
-  for (let i = 0; i < 4; i++) {
-    vertices.push(P_inner[i][0], P_inner[i][1], P_inner[i][2],
+    vertices.push(P_backGreen[i][0], P_backGreen[i][1], P_backGreen[i][2],
       innerColor[0], innerColor[1], innerColor[2]);
   }
 
-  // outer frame (two triangles)
+  // --- Border diamond vertices (index 4-7) ---
+  for (let i = 0; i < 4; i++) {
+    vertices.push(P_border[i][0], P_border[i][1], P_border[i][2],
+      borderColor[0], borderColor[1], borderColor[2]);
+  }
+
+  // --- Front green diamond vertices (index 8-11) ---
+  for (let i = 0; i < 4; i++) {
+    vertices.push(P_frontGreen[i][0], P_frontGreen[i][1], P_frontGreen[i][2],
+      innerColor[0], innerColor[1], innerColor[2]);
+  }
+
+  // Back green diamond (2 triangles)
   faces.push(0, 1, 2, 0, 2, 3);
 
-  // inner green diamond (two triangles)
+  // Border diamond (2 triangles)
   faces.push(4, 5, 6, 4, 6, 7);
 
+  // Front green diamond (2 triangles)
+  faces.push(8, 9, 10, 8, 10, 11);
+
   if (twoSided) {
-    const baseCount = vertices.length / 6;
+    const baseCount = vertices.length / 6; // 12 vertices
     const origFaceCount = faces.length;
+    
     // duplicate vertices
     for (let i = 0; i < baseCount; i++) {
       const k = i * 6;
@@ -57,6 +77,7 @@ export function generateWing({
         vertices[k + 3], vertices[k + 4], vertices[k + 5]
       );
     }
+    
     // reverse winding for back side
     for (let i = 0; i < origFaceCount; i += 3) {
       faces.push(
