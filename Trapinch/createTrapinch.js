@@ -34,10 +34,10 @@ export function createTrapinch(Gl, SHADER_PROGRAM, attribs) {
     [1, 1, 1]
   ); // white
   const TrapinchNeck = generateTrapinchNeck(
-    0.325,
+    0.3,
     0.2,
-    0.6,
-    1.2,
+    0.2,
+    1,
     8,
     16,
     [0.9, 0.53, 0.22]
