@@ -32,7 +32,7 @@ export function createTrapinch(Gl, SHADER_PROGRAM, attribs) {
     8,
     10,
     [1, 1, 1]
-  ); // white
+  ); //
   const TrapinchNeck = generateTrapinchNeck(
     0.3,
     0.2,
@@ -293,13 +293,13 @@ export function createTrapinch(Gl, SHADER_PROGRAM, attribs) {
     LIBS.rotateX(Trapinch.MOVE_MATRIX, (20 * Math.PI) / 180);
 
     // Idle bob + light breathing
-    const bob = Math.sin(t * 2.0) * 0.08;
-    const breath = 1.0 + Math.sin(t * 1.0) * 0.03;
+    const bob = Math.sin(t * 2.0) * 0.1;
+    const breath = 1.0 + Math.sin(t * 2.0) * 0.03;
     LIBS.scaleX(Trapinch.MOVE_MATRIX, breath);
     LIBS.scaleY(Trapinch.MOVE_MATRIX, breath);
     LIBS.scaleZ(Trapinch.MOVE_MATRIX, breath);
     tmp = LIBS.get_I4();
-    LIBS.translateY(tmp, -0.2 + bob);
+    LIBS.translateY(tmp, -0.6 + bob);
     Trapinch.MOVE_MATRIX = LIBS.multiply(Trapinch.MOVE_MATRIX, tmp);
 
     var tmp;
@@ -325,6 +325,7 @@ export function createTrapinch(Gl, SHADER_PROGRAM, attribs) {
     LIBS.set_I4(TLEyes.MOVE_MATRIX);
     LIBS.translateX(TLEyes.MOVE_MATRIX, -0.9);
     LIBS.translateY(TLEyes.MOVE_MATRIX, 0.3);
+    LIBS.translateZ(TLEyes.MOVE_MATRIX, -0.5);
     LIBS.rotateZ(TLEyes.MOVE_MATRIX, -Math.PI / 8);
 
     LIBS.set_I4(TRPupil.MOVE_MATRIX);
@@ -370,10 +371,26 @@ export function createTrapinch(Gl, SHADER_PROGRAM, attribs) {
     // LB
     LIBS.set_I4(TLBLeg.MOVE_MATRIX);
     LIBS.translateX(TLBLeg.MOVE_MATRIX, -0.55);
-    LIBS.translateZ(TLBLeg.MOVE_MATRIX, -0.3 + swing);
+    LIBS.translateZ(TLBLeg.MOVE_MATRIX, -0.4 + swing);
     LIBS.translateY(TLBLeg.MOVE_MATRIX, -0.2 + lift);
     LIBS.rotateY(TLBLeg.MOVE_MATRIX, -Math.PI / 2);
     LIBS.rotateX(TLBLeg.MOVE_MATRIX, swing * 0.5);
+
+    const pupilScale = (Math.sin(t) + 1) / 2; // range = [0, 1]
+
+    // LEFT pupil
+    let animMat = LIBS.get_I4();
+    LIBS.scaleY(animMat, pupilScale);
+    TLEyes.MOVE_MATRIX = LIBS.multiply(TLEyes.MOVE_MATRIX, animMat);
+
+    LIBS.translateZ(TLEyes.MOVE_MATRIX, .4)
+    
+    // RIGHT pupil
+    animMat = LIBS.get_I4();
+    LIBS.scaleY(animMat, pupilScale);
+    TREyes.MOVE_MATRIX = LIBS.multiply(TREyes.MOVE_MATRIX, animMat);
+
+    LIBS.translateZ(TREyes.MOVE_MATRIX, -.4)
   }
 
   return {
