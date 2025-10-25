@@ -236,12 +236,19 @@ export function createVibrava(Gl, SHADER_PROGRAM, attribs) {
     Body.MOVE_MATRIX = LIBS.multiply(Body.MOVE_MATRIX, T);
 
     // Head subtle wiggle (reset to base each frame)
+    const breath = 1.2 + Math.sin(t * 2.0) * 0.1;
+
+
     LIBS.set_I4(Head.MOVE_MATRIX);
     T = LIBS.get_I4(); LIBS.translateX(T, 4.8);           Head.MOVE_MATRIX = LIBS.multiply(Head.MOVE_MATRIX, T);
     T = LIBS.get_I4(); LIBS.rotateZ(T, Math.sin(t * wiggleSpeed * 1.5) * 0.05);
     Head.MOVE_MATRIX = LIBS.multiply(Head.MOVE_MATRIX, T);
     T = LIBS.get_I4(); LIBS.rotateX(T, Math.cos(t * wiggleSpeed * 1.5) * 0.03);
     Head.MOVE_MATRIX = LIBS.multiply(Head.MOVE_MATRIX, T);
+
+    LIBS.scaleX(Head.MOVE_MATRIX, breath);
+    LIBS.scaleY(Head.MOVE_MATRIX, breath);
+    LIBS.scaleZ(Head.MOVE_MATRIX, breath);
 
     // Organic leg wiggle
     Object.entries(legs).forEach(([name, parts], idx) => {

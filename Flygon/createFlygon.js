@@ -575,7 +575,7 @@ export function createFlygon(Gl, SHADER_PROGRAM, attribs) {
   const py = tip[1] + dy * push;
   const pz = tip[2] + dz * push;
 
-  function animate(t, orbit = {theta:0, phi:0}) {
+  function animate(t, orbit = { theta: 0, phi: 0 }) {
     Flygon.MOVE_MATRIX = LIBS.get_I4();
     LIBS.rotateX(Flygon.MOVE_MATRIX, (40 * Math.PI) / 180);
     let temp = LIBS.get_I4();
@@ -631,7 +631,7 @@ export function createFlygon(Gl, SHADER_PROGRAM, attribs) {
     LIBS.rotateZ(temp, -(40 * Math.PI) / 180);
     rightWing.MOVE_MATRIX = LIBS.multiply(rightWing.MOVE_MATRIX, temp);
 
-    
+
     temp = LIBS.get_I4();
     LIBS.rotateX(temp, (30 * Math.PI) / 180 + wingFlap);
     rightWing.MOVE_MATRIX = LIBS.multiply(rightWing.MOVE_MATRIX, temp);
@@ -667,9 +667,14 @@ export function createFlygon(Gl, SHADER_PROGRAM, attribs) {
     LIBS.translateY(Belly.MOVE_MATRIX, 0.1 + bodyBob);
 
     // Head follows body slightly
+    const breath = 1 + Math.sin(t * 5.0) * 0.04;
+
     LIBS.set_I4(Head.MOVE_MATRIX);
     LIBS.translateY(Head.MOVE_MATRIX, 3.4 + bodyBob * 1.2);
     LIBS.rotateX(Head.MOVE_MATRIX, (-10 * Math.PI) / 180 + bodyBob * 0.1);
+    LIBS.scaleX(Head.MOVE_MATRIX, breath);
+    LIBS.scaleY(Head.MOVE_MATRIX, breath);
+    LIBS.scaleZ(Head.MOVE_MATRIX, breath);
   }
 
   return {
