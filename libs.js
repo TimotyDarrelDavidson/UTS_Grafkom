@@ -140,6 +140,49 @@ export const LIBS = {
     return rm;
   },
 
+  // ADD THIS: Arbitrary axis rotation
+    rotateArbitraryAxis: function (m, axis, angle) {
+        // Normalize axis
+        var len = Math.sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
+        var x = axis[0] / len;
+        var y = axis[1] / len;
+        var z = axis[2] / len;
+
+        var c = Math.cos(angle);
+        var s = Math.sin(angle);
+        var t = 1 - c;
+
+        // Rotation matrix for arbitrary axis (Rodrigues' rotation formula)
+        var r00 = t * x * x + c;
+        var r01 = t * x * y - s * z;
+        var r02 = t * x * z + s * y;
+
+        var r10 = t * x * y + s * z;
+        var r11 = t * y * y + c;
+        var r12 = t * y * z - s * x;
+
+        var r20 = t * x * z - s * y;
+        var r21 = t * y * z + s * x;
+        var r22 = t * z * z + c;
+
+        // Apply rotation to matrix
+        var m0 = m[0], m1 = m[1], m2 = m[2];
+        var m4 = m[4], m5 = m[5], m6 = m[6];
+        var m8 = m[8], m9 = m[9], m10 = m[10];
+
+        m[0] = r00 * m0 + r01 * m1 + r02 * m2;
+        m[1] = r10 * m0 + r11 * m1 + r12 * m2;
+        m[2] = r20 * m0 + r21 * m1 + r22 * m2;
+
+        m[4] = r00 * m4 + r01 * m5 + r02 * m6;
+        m[5] = r10 * m4 + r11 * m5 + r12 * m6;
+        m[6] = r20 * m4 + r21 * m5 + r22 * m6;
+
+        m[8] = r00 * m8 + r01 * m9 + r02 * m10;
+        m[9] = r10 * m8 + r11 * m9 + r12 * m10;
+        m[10] = r20 * m8 + r21 * m9 + r22 * m10;
+    },
+    
   scale: function (m, sx, sy, sz) {
     const scaleMatrix = this.get_I4();
     scaleMatrix[0] = sx;
